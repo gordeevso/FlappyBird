@@ -7,6 +7,7 @@
 #include "GLContextWrapper.h"
 #include "SensorManager.h"
 #include "LogWrapper.h"
+#include "TouchDetector.h"
 
 class FlappyEngine
 {
@@ -50,7 +51,7 @@ public:
     void onLostFocus();
 
     static void AndroidStateHandler(struct android_app *app, int32_t cmd);
-    static int32_t AndroidInputHandler(android_app *app, AInputEvent *event);
+    static int32_t AndroidTouchHandler(android_app *app, AInputEvent *event);
 
 
     void SetState(android_app* state);
@@ -74,6 +75,7 @@ private:
 
     std::shared_ptr<GLContextWrapper> mPtrGLContext;
     std::shared_ptr<SensorManager> mPtrSensorManager;
+    std::shared_ptr<TapDetector> mPtrTapDetector;
 
     bool mInitializedResource;
     bool mHasFocus;

@@ -4,6 +4,7 @@ add_library( FlappyPelican
              SHARED
              src/main/cpp/GLContextWrapper.cpp
              src/main/cpp/LogWrapper.cpp
+             src/main/cpp/TouchDetector.cpp
              src/main/cpp/SensorManager.cpp
              src/main/cpp/FlappyEngine.cpp
              src/main/cpp/Main.cpp )

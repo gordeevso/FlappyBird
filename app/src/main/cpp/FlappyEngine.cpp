@@ -12,7 +12,7 @@ void FlappyEngine::Init(android_app *app) {
 
     mPtrAndroidApp->userData = this;
     mPtrAndroidApp->onAppCmd = AndroidStateHandler;
-    mPtrAndroidApp->onInputEvent = AndroidInputHandler;
+    mPtrAndroidApp->onInputEvent = AndroidTouchHandler;
 
     mPtrGLContext.reset(new GLContextWrapper);
     mPtrSensorManager.reset(new SensorManager(app));
@@ -156,57 +156,15 @@ void FlappyEngine::AndroidStateHandler(struct android_app *app, int32_t cmd) {
     }
 }
 
-int32_t FlappyEngine::AndroidInputHandler(android_app *app, AInputEvent *event) {
-//    Engine* eng = (Engine*)app->userData;
-//    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
-//        ndk_helper::GESTURE_STATE doubleTapState =
-//                eng->doubletap_detector_.Detect(event);
-//        ndk_helper::GESTURE_STATE dragState = eng->drag_detector_.Detect(event);
-//        ndk_helper::GESTURE_STATE pinchState = eng->pinch_detector_.Detect(event);
-//
-//        // Double tap detector has a priority over other detectors
-//        if (doubleTapState == ndk_helper::GESTURE_STATE_ACTION) {
-//            // Detect double tap
-//            eng->tap_camera_.Reset(true);
-//        } else {
-//            // Handle drag state
-//            if (dragState & ndk_helper::GESTURE_STATE_START) {
-//                // Otherwise, start dragging
-//                ndk_helper::Vec2 v;
-//                eng->drag_detector_.GetPointer(v);
-//                eng->TransformPosition(v);
-//                eng->tap_camera_.BeginDrag(v);
-//            } else if (dragState & ndk_helper::GESTURE_STATE_MOVE) {
-//                ndk_helper::Vec2 v;
-//                eng->drag_detector_.GetPointer(v);
-//                eng->TransformPosition(v);
-//                eng->tap_camera_.Drag(v);
-//            } else if (dragState & ndk_helper::GESTURE_STATE_END) {
-//                eng->tap_camera_.EndDrag();
-//            }
-//
-//            // Handle pinch state
-//            if (pinchState & ndk_helper::GESTURE_STATE_START) {
-//                // Start new pinch
-//                ndk_helper::Vec2 v1;
-//                ndk_helper::Vec2 v2;
-//                eng->pinch_detector_.GetPointers(v1, v2);
-//                eng->TransformPosition(v1);
-//                eng->TransformPosition(v2);
-//                eng->tap_camera_.BeginPinch(v1, v2);
-//            } else if (pinchState & ndk_helper::GESTURE_STATE_MOVE) {
-//                // Multi touch
-//                // Start new pinch
-//                ndk_helper::Vec2 v1;
-//                ndk_helper::Vec2 v2;
-//                eng->pinch_detector_.GetPointers(v1, v2);
-//                eng->TransformPosition(v1);
-//                eng->TransformPosition(v2);
-//                eng->tap_camera_.Pinch(v1, v2);
-//            }
-//        }
-//        return 1;
-//    }
+int32_t FlappyEngine::AndroidTouchHandler(android_app *app, AInputEvent *event) {
+    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
+        GESTURE_STATE tapState = TapDetector::GetInstance()->Detect(event);
+
+        if(tapState == GESTURE_STATE_ACTION) {
+            LogWrapper::info("TAP");
+        }
+        return 1;
+    }
     return 0;
 }
 
