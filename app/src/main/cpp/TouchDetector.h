@@ -1,11 +1,12 @@
 #pragma once
 
 #include <android_native_app_glue.h>
+#include <cstdint>
+#include <android/configuration.h>
+#include <android/input.h>
 
-const int32_t DOUBLE_TAP_TIMEOUT = 300 * 1000000;
-const int32_t TAP_TIMEOUT = 180 * 1000000;
-const int32_t DOUBLE_TAP_SLOP = 100;
-const int32_t TOUCH_SLOP = 8;
+int32_t const TAP_TIMEOUT = 180 * 1000000;
+int32_t const TOUCH_SLOP = 8;
 
 enum {
     GESTURE_STATE_NONE = 0,
@@ -14,37 +15,26 @@ enum {
     GESTURE_STATE_END = 4,
     GESTURE_STATE_ACTION = (GESTURE_STATE_START | GESTURE_STATE_END),
 };
-typedef int32_t GESTURE_STATE;
+typedef int32_t TouchState;
 
-/******************************************************************
- * Base class of Gesture Detectors
- * GestureDetectors handles input events and detect gestures
- * Note that different detectors may detect gestures with an event at
- * same time. The caller needs to manage gesture priority accordingly
- *
- */
-class GestureDetector {
+class TouchDetector {
 protected:
-    float dp_factor_;
+    float mDPFactor;
 
 public:
-    GestureDetector();
-    virtual ~GestureDetector() {}
+    TouchDetector();
+    virtual ~TouchDetector() {}
     virtual void SetConfiguration(AConfiguration* config);
 
-    virtual GESTURE_STATE Detect(const AInputEvent* motion_event) = 0;
+    virtual TouchState Detect(const AInputEvent* motionEvent) = 0;
 };
 
-/******************************************************************
- * Tap gesture detector
- * Returns GESTURE_STATE_ACTION when a tap gesture is detected
- *
- */
-class TapDetector : public GestureDetector {
+
+class TapDetector : public TouchDetector {
 private:
-    int32_t down_pointer_id_;
-    float down_x_;
-    float down_y_;
+    int32_t mDownPointerId;
+    float mDownX;
+    float mDownY;
 
     TapDetector();
     TapDetector(TapDetector const &);
@@ -57,6 +47,6 @@ public:
     }
 
     virtual ~TapDetector() {}
-    virtual GESTURE_STATE Detect(const AInputEvent* motion_event);
+    virtual TouchState Detect(const AInputEvent* motionEvent);
 };
 

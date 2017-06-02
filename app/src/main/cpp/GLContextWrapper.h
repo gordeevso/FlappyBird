@@ -6,26 +6,22 @@
 class GLContextWrapper {
 private:
     // EGL configurations
-    ANativeWindow* window_;
-    EGLDisplay display_;
-    EGLSurface surface_;
-    EGLContext context_;
-    EGLConfig config_;
+    ANativeWindow* mPtrWindow;
+    EGLDisplay mDisplay;
+    EGLSurface mSurface;
+    EGLContext mContext;
+    EGLConfig mConfig;
 
     // Screen parameters
-    int32_t screen_width_;
-    int32_t screen_height_;
-    int32_t color_size_;
-    int32_t depth_size_;
+    int32_t mScreenWidth;
+    int32_t mScreenHeight;
+    int32_t mColorSize;
+    int32_t mDepthSize;
 
     // Flags
-//    bool gles_initialized_;
-    bool egl_context_initialized_;
-//    bool es3_supported_;
-//    float gl_version_;
-    bool context_valid_;
+    bool mEGLContextInitialized;
+    bool mIsContextValid;
 
-//    void InitGLES();
     void DestroyContext();
     bool InitEGLSurface();
     bool InitEGLContext();
@@ -45,15 +41,15 @@ public:
     void Suspend();
     EGLint Resume(ANativeWindow* window);
 
-    int32_t GetScreenWidth() const { return screen_width_; }
-    int32_t GetScreenHeight() const { return screen_height_; }
+    int32_t GetScreenWidth() const { return mScreenWidth; }
+    int32_t GetScreenHeight() const { return mScreenHeight; }
 
-    int32_t GetBufferColorSize() const { return color_size_; }
-    int32_t GetBufferDepthSize() const { return depth_size_; }
-//    float GetGLVersion() const { return gl_version_; }
+    int32_t GetBufferColorSize() const { return mColorSize; }
+    int32_t GetBufferDepthSize() const { return mDepthSize; }
+
     bool CheckExtension(const char* extension);
 
-    EGLDisplay GetDisplay() const { return display_; }
-    EGLSurface GetSurface() const { return surface_; }
+    EGLDisplay GetDisplay() const { return mDisplay; }
+    EGLSurface GetSurface() const { return mSurface; }
 };
 

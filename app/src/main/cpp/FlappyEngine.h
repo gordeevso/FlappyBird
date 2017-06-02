@@ -5,7 +5,6 @@
 #include <android_native_app_glue.h>
 
 #include "GLContextWrapper.h"
-#include "SensorManager.h"
 #include "LogWrapper.h"
 #include "TouchDetector.h"
 
@@ -53,47 +52,17 @@ public:
     static void AndroidStateHandler(struct android_app *app, int32_t cmd);
     static int32_t AndroidTouchHandler(android_app *app, AInputEvent *event);
 
-
-    void SetState(android_app* state);
-    int InitDisplay();
     void LoadResources();
     void UnloadResources();
     void DrawFrame();
-    void TermDisplay();
     void TrimMemory();
-    bool IsReady();
 
-    void UpdatePosition(AInputEvent* event, int32_t iIndex, float& fX, float& fY);
-
-//    void InitSensors();
-//    void ProcessSensors(int32_t id);
-//    void SuspendSensors();
-//    void ResumeSensors();
 private:
-//    TeapotRenderer renderer_;
     android_app* mPtrAndroidApp;
 
     std::shared_ptr<GLContextWrapper> mPtrGLContext;
-    std::shared_ptr<SensorManager> mPtrSensorManager;
-    std::shared_ptr<TapDetector> mPtrTapDetector;
 
     bool mInitializedResource;
     bool mHasFocus;
     bool mFinishActivity;
-
-//    ndk_helper::DoubletapDetector doubletap_detector_;
-//    ndk_helper::PinchDetector pinch_detector_;
-//    ndk_helper::DragDetector drag_detector_;
-//    ndk_helper::PerfMonitor monitor_;
-
-
-
-
-
-
-//    void UpdateFPS(float fFPS);
-//    void ShowUI();
-//    void TransformPosition(ndk_helper::Vec2& vec);
-
-
 };

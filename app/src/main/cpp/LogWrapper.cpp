@@ -1,5 +1,4 @@
 #include "LogWrapper.h"
-//#include <stdarg.h>
 #include <android/log.h>
 
 char const APP_NAME [] = "FlappyPelican";

@@ -2,18 +2,20 @@
 
 #include "LogWrapper.h"
 
-GestureDetector::GestureDetector() { dp_factor_ = 1.f; }
-
-void GestureDetector::SetConfiguration(AConfiguration* config) {
-    dp_factor_ = 160.f / AConfiguration_getDensity(config);
+TouchDetector::TouchDetector() {
+    mDPFactor = 1.f;
 }
 
-//--------------------------------------------------------------------------------
-// TapDetector
-//--------------------------------------------------------------------------------
-TapDetector::TapDetector() : down_x_(0), down_y_(0) {}
+void TouchDetector::SetConfiguration(AConfiguration* config) {
+    mDPFactor = 160.f / AConfiguration_getDensity(config);
+}
 
-GESTURE_STATE TapDetector::Detect(const AInputEvent* motion_event) {
+
+TapDetector::TapDetector() : mDownX(0),
+                             mDownY(0)
+{}
+
+TouchState TapDetector::Detect(AInputEvent const * motion_event) {
     if (AMotionEvent_getPointerCount(motion_event) > 1) {
         // Only support single touch
         return false;
@@ -23,18 +25,18 @@ GESTURE_STATE TapDetector::Detect(const AInputEvent* motion_event) {
     unsigned int flags = action & AMOTION_EVENT_ACTION_MASK;
     switch (flags) {
         case AMOTION_EVENT_ACTION_DOWN:
-            down_pointer_id_ = AMotionEvent_getPointerId(motion_event, 0);
-            down_x_ = AMotionEvent_getX(motion_event, 0);
-            down_y_ = AMotionEvent_getY(motion_event, 0);
+            mDownPointerId = AMotionEvent_getPointerId(motion_event, 0);
+            mDownX = AMotionEvent_getX(motion_event, 0);
+            mDownY = AMotionEvent_getY(motion_event, 0);
             break;
         case AMOTION_EVENT_ACTION_UP: {
             int64_t eventTime = AMotionEvent_getEventTime(motion_event);
             int64_t downTime = AMotionEvent_getDownTime(motion_event);
             if (eventTime - downTime <= TAP_TIMEOUT) {
-                if (down_pointer_id_ == AMotionEvent_getPointerId(motion_event, 0)) {
-                    float x = AMotionEvent_getX(motion_event, 0) - down_x_;
-                    float y = AMotionEvent_getY(motion_event, 0) - down_y_;
-                    if (x * x + y * y < TOUCH_SLOP * TOUCH_SLOP * dp_factor_) {
+                if (mDownPointerId == AMotionEvent_getPointerId(motion_event, 0)) {
+                    float x = AMotionEvent_getX(motion_event, 0) - mDownX;
+                    float y = AMotionEvent_getY(motion_event, 0) - mDownY;
+                    if (x * x + y * y < TOUCH_SLOP * TOUCH_SLOP * mDPFactor) {
                         LogWrapper::info("TapDetector: Tap detected");
                         return GESTURE_STATE_ACTION;
                     }
