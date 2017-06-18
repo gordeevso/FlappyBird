@@ -1,4 +1,5 @@
 #include <string>
+#include <cassert>
 
 #include "GLContextWrapper.h"
 #include "LogWrapper.h"
@@ -73,14 +74,18 @@ bool GLContextWrapper::InitEGLSurface() {
         mDepthSize = 16;
     }
 
-    if (!num_configs) {
-        LogWrapper::warn("Unable to retrieve EGL config");
-        return false;
-    }
+    EGLint errorCode = eglGetError();
+    LogWrapper::info("GLCONTEXT INIT EGL SURFACE %x", errorCode);
+    assert(errorCode == EGL_SUCCESS);
+
 
     mSurface = eglCreateWindowSurface(mDisplay, mConfig, mPtrWindow, NULL);
     eglQuerySurface(mDisplay, mSurface, EGL_WIDTH, &mScreenWidth);
     eglQuerySurface(mDisplay, mSurface, EGL_HEIGHT, &mScreenHeight);
+
+    errorCode = eglGetError();
+    LogWrapper::info("GLCONTEXT INIT EGL CREATE SURFACE %x", errorCode);
+    assert(errorCode == EGL_SUCCESS);
 
     return true;
 }
@@ -91,10 +96,15 @@ bool GLContextWrapper::InitEGLContext() {
                                       EGL_NONE};
     mContext = eglCreateContext(mDisplay, mConfig, NULL, context_attribs);
 
-    if (eglMakeCurrent(mDisplay, mSurface, mSurface, mContext) == EGL_FALSE) {
-        LogWrapper::warn("Unable to eglMakeCurrent");
-        return false;
-    }
+    EGLint errorCode = eglGetError();
+    LogWrapper::info("GLCONTEXT INIT EGL CREATE CONTEXT %x", errorCode);
+    assert(errorCode == EGL_SUCCESS);
+
+    eglMakeCurrent(mDisplay, mSurface, mSurface, mContext);
+
+    errorCode = eglGetError();
+    LogWrapper::info("GLCONTEXT INIT EGL MAKECURRENT %x", errorCode);
+    assert(errorCode == EGL_SUCCESS);
 
     mIsContextValid = true;
     return true;
@@ -102,6 +112,13 @@ bool GLContextWrapper::InitEGLContext() {
 
 EGLint GLContextWrapper::Swap() {
     EGLBoolean swapBuffersRes = eglSwapBuffers(mDisplay, mSurface);
+
+    EGLint errorCode = eglGetError();
+    if(errorCode != EGL_SUCCESS) {
+        LogWrapper::info("GLCONTEXT SWAP %x", errorCode);
+        assert(errorCode == EGL_SUCCESS);
+    }
+
     if (!swapBuffersRes) {
         EGLint err = eglGetError();
         if (err == EGL_BAD_SURFACE) {
@@ -132,6 +149,10 @@ void GLContextWrapper::DestroyContext() {
         eglTerminate(mDisplay);
     }
 
+    EGLint errorCode = eglGetError();
+    LogWrapper::info("GLCONTEXT DESTROY CONTEXT %x", errorCode);
+    assert(errorCode == EGL_SUCCESS);
+
     mDisplay = EGL_NO_DISPLAY;
     mContext = EGL_NO_CONTEXT;
     mSurface = EGL_NO_SURFACE;
@@ -139,47 +160,23 @@ void GLContextWrapper::DestroyContext() {
 }
 
 EGLint GLContextWrapper::Resume(ANativeWindow* window) {
-    if (mEGLContextInitialized == false) {
-        Init(window);
-        return EGL_SUCCESS;
-    }
-    int32_t original_widhth = mScreenWidth;
-    int32_t original_height = mScreenHeight;
+    GLContextWrapper::Init(window);
 
-    // Create surface
-    mPtrWindow = window;
-    mSurface = eglCreateWindowSurface(mDisplay, mConfig, mPtrWindow, NULL);
-    eglQuerySurface(mDisplay, mSurface, EGL_WIDTH, &mScreenWidth);
-    eglQuerySurface(mDisplay, mSurface, EGL_HEIGHT, &mScreenHeight);
+    EGLint errorCode = eglGetError();
+    LogWrapper::info("GLCONTEXT RESUME %x", errorCode);
+    assert(errorCode == EGL_SUCCESS);
 
-    if (mScreenWidth != original_widhth || mScreenHeight != original_height) {
-        // Screen resized
-        LogWrapper::info("Screen resized");
-    }
-
-    if (eglMakeCurrent(mDisplay, mSurface, mSurface, mContext) == EGL_TRUE)
-        return EGL_SUCCESS;
-
-    EGLint err = eglGetError();
-    LogWrapper::warn("Unable to eglMakeCurrent %d", err);
-
-    if (err == EGL_CONTEXT_LOST) {
-        // Recreate context
-        LogWrapper::info("Re-creating egl context");
-        InitEGLContext();
-    } else {
-        // Recreate surface
-        DestroyContext();
-        InitEGLSurface();
-        InitEGLContext();
-    }
-
-    return err;
+    return errorCode;
 }
 
 void GLContextWrapper::Suspend() {
     if (mSurface != EGL_NO_SURFACE) {
         eglDestroySurface(mDisplay, mSurface);
+
+        EGLint errorCode = eglGetError();
+        LogWrapper::info("GLCONTEXT SUSPEND %x", errorCode);
+        assert(errorCode == EGL_SUCCESS);
+
         mSurface = EGL_NO_SURFACE;
     }
 }

@@ -23,30 +23,23 @@ protected:
 
 public:
     TouchDetector();
-    virtual ~TouchDetector() {}
-    virtual void SetConfiguration(AConfiguration* config);
+    virtual ~TouchDetector() = default;
+    virtual void Init(AConfiguration *config);
 
     virtual TouchState Detect(const AInputEvent* motionEvent) = 0;
 };
 
 
 class TapDetector : public TouchDetector {
+public:
+    TapDetector(AConfiguration * config);
+
+    virtual ~TapDetector() {}
+    virtual TouchState Detect(const AInputEvent* motionEvent);
+
 private:
     int32_t mDownPointerId;
     float mDownX;
     float mDownY;
-
-    TapDetector();
-    TapDetector(TapDetector const &);
-    TapDetector & operator=(TapDetector const &);
-
-public:
-    static TapDetector * GetInstance() {
-        static TapDetector instance;
-        return &instance;
-    }
-
-    virtual ~TapDetector() {}
-    virtual TouchState Detect(const AInputEvent* motionEvent);
 };
 

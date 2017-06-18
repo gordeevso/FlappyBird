@@ -6,14 +6,16 @@ TouchDetector::TouchDetector() {
     mDPFactor = 1.f;
 }
 
-void TouchDetector::SetConfiguration(AConfiguration* config) {
+void TouchDetector::Init(AConfiguration *config) {
     mDPFactor = 160.f / AConfiguration_getDensity(config);
 }
 
 
-TapDetector::TapDetector() : mDownX(0),
-                             mDownY(0)
-{}
+TapDetector::TapDetector(AConfiguration * config) : mDownX(0),
+                                                    mDownY(0)
+{
+    Init(config);
+}
 
 TouchState TapDetector::Detect(AInputEvent const * motion_event) {
     if (AMotionEvent_getPointerCount(motion_event) > 1) {

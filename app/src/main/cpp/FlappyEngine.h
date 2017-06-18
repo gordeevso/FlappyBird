@@ -2,33 +2,28 @@
 
 #include <memory>
 
-#include <android_native_app_glue.h>
-
-#include "GLContextWrapper.h"
-#include "LogWrapper.h"
-#include "TouchDetector.h"
+#include "TimeManager.h"
+#include "SpriteRenderer.h"
 
 class FlappyEngine
 {
 
 public:
-    static FlappyEngine * GetInstance() {
+    static FlappyEngine & GetInstance() {
         static FlappyEngine instance;
-        return &instance;
+        return instance;
     }
 
 private:
     FlappyEngine();
-    FlappyEngine(FlappyEngine const &);
-    FlappyEngine & operator=(FlappyEngine const &);
+    FlappyEngine(FlappyEngine const &) = delete;
+    FlappyEngine & operator=(FlappyEngine const &) = delete;
 
 public:
 
-    ~FlappyEngine();
+    ~FlappyEngine() = default;
     void Run();
-    void Init(android_app * app);
-    void GetFocus();
-    void GiveFocus();
+    void Init();
 
     bool onActivate();
     void onDeactivate();
@@ -49,20 +44,11 @@ public:
     void onGainFocus();
     void onLostFocus();
 
-    static void AndroidStateHandler(struct android_app *app, int32_t cmd);
-    static int32_t AndroidTouchHandler(android_app *app, AInputEvent *event);
-
-    void LoadResources();
-    void UnloadResources();
-    void DrawFrame();
-    void TrimMemory();
 
 private:
-    android_app* mPtrAndroidApp;
 
-    std::shared_ptr<GLContextWrapper> mPtrGLContext;
-
+    std::unique_ptr<TimeManager> mPtrTimeManager;
+    std::unique_ptr<SpriteRenderer> mPtrSpriteRenderer;
     bool mInitializedResource;
-    bool mHasFocus;
-    bool mFinishActivity;
+
 };
