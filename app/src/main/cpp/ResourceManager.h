@@ -24,12 +24,13 @@ public:
     static std::shared_ptr<Texture> GetTexture(std::string const &name);
     static std::vector<std::string> const & GetTextureNames();
 
+    static void Read(std::string path, std::vector<uint8_t> & pBuffer, size_t sizeBytes = 0);
 private:
     ResourceManager() = delete;
     ResourceManager(ResourceManager const &) = delete;
     ResourceManager &operator=(ResourceManager const &) = delete;
 
-    static void Read(std::string path, std::vector<uint8_t> & pBuffer, size_t sizeBytes = 0);
+
 
 private:
     static ShaderMap mShaders;

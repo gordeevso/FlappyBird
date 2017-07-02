@@ -4,6 +4,8 @@
 
 #include "TimeManager.h"
 #include "SpriteRenderer.h"
+#include "ActorFactory.h"
+#include "Scene.h"
 
 class FlappyEngine
 {
@@ -48,7 +50,7 @@ public:
 private:
 
     std::unique_ptr<TimeManager> mPtrTimeManager;
-    std::unique_ptr<SpriteRenderer> mPtrSpriteRenderer;
+    std::unique_ptr<Scene> mPtrScene;
     bool mInitializedResource;
 
 };

@@ -10,6 +10,7 @@ Android::Android() : mPtrAndroidApp {nullptr},
                      mAssetManager {nullptr},
                      mAsset {nullptr},
                      mPtrTapDetector {nullptr},
+                     mTapped{false},
                      mHasFocus {false},
                      mFinishActivity {false}
 {}
@@ -33,6 +34,8 @@ void Android::Run() {
         int events;
         android_poll_source* source;
 
+        mTapped = false;
+
         // If not animating, we will block forever waiting for events.
         // If animating, we loop until all events are read, then continue
         // to draw the next frame of animation.
@@ -53,7 +56,6 @@ void Android::Run() {
         }
 
         if (mHasFocus && !mFinishActivity) {
-
             if (!FlappyEngine::GetInstance().onStep()) {
                 mFinishActivity = true;
                 LogWrapper::debug("Finishing activity from main loop");
@@ -185,7 +187,9 @@ int32_t Android::HandleInput(AInputEvent *inputEvent) {
 
         if(tapState == GESTURE_STATE_ACTION) {
             LogWrapper::debug("TAP");
+            mTapped = true;
         }
+
         return 1;
     }
     return 0;

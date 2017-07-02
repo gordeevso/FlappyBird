@@ -2,17 +2,24 @@
 #include "ResourceManager.h"
 #include "Android.h"
 #include "LogWrapper.h"
+#include "ActorFactory.h"
 
 FlappyEngine::FlappyEngine() : mPtrTimeManager {new TimeManager},
-                               mPtrSpriteRenderer {nullptr},
+                               mPtrScene {nullptr},
                                mInitializedResource {false}
 {}
 
 void FlappyEngine::Init() {
 
     if(!mInitializedResource) {
-//        ResourceManager::LoadShader("shaders/sprite.vs", "shaders/sprite.fs", "rect");
-        mPtrSpriteRenderer.reset(new SpriteRenderer);
+        ResourceManager::LoadTexture("textures/bird1.png", GL_TRUE, "bird1");
+        ResourceManager::LoadTexture("textures/bird2.png", GL_TRUE, "bird2");
+        ResourceManager::LoadTexture("textures/bird3.png", GL_TRUE, "bird3");
+        ResourceManager::LoadTexture("textures/bird4.png", GL_TRUE, "bird4");
+        ResourceManager::LoadTexture("textures/tree.png", GL_TRUE, "tree");
+
+        mPtrScene.reset(new Scene);
+
         mInitializedResource = true;
     }
 
@@ -21,20 +28,16 @@ void FlappyEngine::Init() {
 
 void FlappyEngine::Run() {
     mPtrTimeManager->UpdateMainLoop();
-
-
     Android::GetInstance().Run();
 }
 
 
 bool FlappyEngine::onActivate() {
-//    mPtrGLContext->Resume(mPtrAndroidApp->window);
     return true;
 }
 
 void FlappyEngine::onDeactivate() {
     LogWrapper::debug("FlappyEngine::onDeactivate()");
-//    mPtrGLContext->Suspend();
 }
 
 bool FlappyEngine::onStep() {
@@ -42,13 +45,12 @@ bool FlappyEngine::onStep() {
 
 //    LogWrapper::debug("FPS = %f", mPtrTimeManager->FramesPerSecond());
 
-
     glClearColor(0.f, 0.4f, 0.f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    mPtrSpriteRenderer->DrawSprite(ResourceManager::GetTexture("cat"), {0.f, 0.f}, {128.f, 128.f}, 0.f, {1.f,1.f,1.f});
-
-
+    mPtrScene->InputTap(Android::GetInstance().UpdateInput());
+    mPtrScene->Update(mPtrTimeManager->FrameTime());
+    mPtrScene->Draw();
 
     GLContextWrapper::GetInstance().Swap();
     return true;

@@ -3,6 +3,10 @@
 #include "GLContextWrapper.h"
 #include "SpriteRenderer.h"
 #include "ResourceManager.h"
+#include "ActorComponents.h"
+#include "Actor.h"
+
+#include <GLES3/gl3ext.h>
 
 std::string const SPRITE_SHADER = "sprite_shader";
 
@@ -17,15 +21,9 @@ SpriteRenderer::~SpriteRenderer() {
     glDeleteBuffers(1, &mVBO);
 }
 
-void SpriteRenderer::InitSpriteRenderData()
-{
-//    std::cout << "loading shader\n";
+void SpriteRenderer::InitSpriteRenderData() {
     ResourceManager::LoadShader("shaders/sprite.vs", "shaders/sprite.fs", SPRITE_SHADER);
     mShader = ResourceManager::GetShader(SPRITE_SHADER);
-
-//    std::cout << "loading textures \n";
-    ResourceManager::LoadTexture("textures/cat.png", GL_TRUE, "cat");
-
 
     glm::mat4 projection = glm::ortho(0.0f,
                                       static_cast<GLfloat>(GLContextWrapper::GetInstance().GetScreenWidth()),
@@ -46,9 +44,6 @@ void SpriteRenderer::InitSpriteRenderData()
                     1.0f, 1.0f,     1.0f, 1.0f
             };
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     glGenVertexArrays(1, &mVAO);
     glGenBuffers(1, &mVBO);
 
@@ -64,12 +59,15 @@ void SpriteRenderer::InitSpriteRenderData()
     glBindVertexArray(0);
 }
 
-void SpriteRenderer::DrawSprite(std::shared_ptr<Texture> texture,
+void SpriteRenderer::DrawSprite(std::shared_ptr<Texture> const texture,
                                 glm::vec2 const & position,
                                 glm::vec2 const & size,
                                 GLfloat rotate_degrees,
                                 glm::vec3 const & color)
 {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     mShader.Use();
     glm::mat4 model;
 
@@ -78,7 +76,7 @@ void SpriteRenderer::DrawSprite(std::shared_ptr<Texture> texture,
     model = glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 0.0f));
     // Move origin of rotation to center of quad
     model = glm::rotate(model, glm::radians(rotate_degrees), glm::vec3(0.0f, 0.0f, 1.0f));
-    // Then rotate_degrees
+    // Then degrees
     model = glm::translate(model, glm::vec3(-0.5f * size.x, -0.5f * size.y, 0.0f));
     // Move origin back
     model = glm::scale(model, glm::vec3(size, 1.0f));
@@ -93,4 +91,23 @@ void SpriteRenderer::DrawSprite(std::shared_ptr<Texture> texture,
     glBindVertexArray(mVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
+
+    glDisable(GL_BLEND);
+
+}
+
+void SpriteRenderer::Draw(std::shared_ptr<Actors::Actor> ptrActor) {
+    auto ptrWeakRenderComponent = ptrActor->GetComponent<Actors::RenderAnimationComponent>("RenderAnimationComponent");
+    auto ptrStrongRenderComponent = Actors::MakeStrongPtr(ptrWeakRenderComponent);
+
+    auto ptrWeakPhysicsComponent = ptrActor->GetComponent<Actors::PhysicsComponent>("PhysicsComponent");
+    auto ptrStrongPhysicsComponent = Actors::MakeStrongPtr(ptrWeakPhysicsComponent);
+
+    DrawSprite(
+        ptrStrongRenderComponent->GetCurrentFrameTexture(),
+        ptrStrongPhysicsComponent->GetPosition(),
+        ptrStrongPhysicsComponent->GetSize(),
+        ptrStrongPhysicsComponent->GetRotation(),
+        {1.f, 1.f, 1.f}
+    );
 }

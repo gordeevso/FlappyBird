@@ -18,7 +18,9 @@ std::vector<std::string> ResourceManager::mTextureNames;
 
 //Shader-specific functions
 Shader & ResourceManager::GetShader(std::string const &name) {
-    return mShaders[name];
+    auto it = mShaders.find(name);
+    assert(it != mShaders.end());
+    return it->second;
 }
 
 void ResourceManager::LoadShader(std::string const &vs_file_path,
@@ -44,7 +46,9 @@ void ResourceManager::LoadShader(std::string const &vs_file_path,
 
 //Texture-specific functions
 std::shared_ptr<Texture> ResourceManager::GetTexture(std::string const &name) {
-    return mTextures[name];
+    auto it = mTextures.find(name);
+    assert(it != mTextures.end());
+    return it->second;
 }
 
 void ResourceManager::LoadTexture(std::string const &texture_file,

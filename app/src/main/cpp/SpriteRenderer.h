@@ -7,6 +7,7 @@
 
 #include "Shader.h"
 #include "Texture.h"
+#include "Actor.h"
 
 class SpriteRenderer
 {
@@ -16,6 +17,7 @@ public:
     SpriteRenderer & operator=(SpriteRenderer const &) = delete;
     ~SpriteRenderer();
 
+    void Draw(std::shared_ptr<Actors::Actor> ptrActor);
     void DrawSprite(std::shared_ptr<Texture> texture,
                     glm::vec2 const & position,
                     glm::vec2 const & size,

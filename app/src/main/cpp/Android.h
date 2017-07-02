@@ -22,6 +22,7 @@ private:
 public:
     void Init(android_app * androidApp);
     void Run();
+    bool UpdateInput() const { return mTapped; }
 
     android_app const * GetAndroidApp() const;
 
@@ -42,6 +43,7 @@ private:
     AAsset* mAsset;
 
     std::unique_ptr<TapDetector> mPtrTapDetector;
+    bool mTapped;
 
     bool mHasFocus;
     bool mFinishActivity;

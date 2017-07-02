@@ -26,10 +26,6 @@ void Texture::Generate(GLint width,
         throw std::logic_error("Parameters must be positive");
     }
 
-//    if(!data) {
-//        throw std::runtime_error("No image in data handled");
-//    }
-
     mWidth = width;
     mHeight = height;
     mAspectRatio = static_cast<GLfloat>(width)/height;
@@ -39,7 +35,6 @@ void Texture::Generate(GLint width,
                                             SOIL_LOAD_AUTO,
                                             SOIL_CREATE_NEW_ID,
                                             SOIL_FLAG_MIPMAPS | SOIL_FLAG_COMPRESS_TO_DXT);
-
 
 }
 

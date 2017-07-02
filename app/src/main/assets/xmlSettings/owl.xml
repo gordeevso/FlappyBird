@@ -1,0 +1,18 @@
+<Actor
+    Type="Owl">
+
+	<RenderAnimationComponent
+        AnimationTime="0.1"
+        Textures="bird1;bird2;bird3;bird4;">
+	</RenderAnimationComponent>
+
+	<PhysicsComponent
+		ScaleX="1" ScaleMaxX="5"
+		ScaleY="1" ScaleMaxY="2"
+		VelocityX="0.0"
+		VelocityY="0.0"
+		AccelerationX="0.0"
+		AccelerationY="4000.0">
+	</PhysicsComponent>
+
+</Actor>
