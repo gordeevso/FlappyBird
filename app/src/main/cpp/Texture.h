@@ -21,7 +21,7 @@ public:
     GLuint GetId() const noexcept;
     float  GetWidth() const noexcept;
     float  GetHeight() const noexcept;
-
+    float  GetRatio() const noexcept;
     void Generate(GLint width,
                   GLint height,
                   std::vector<uint8_t> const & textureRaw);

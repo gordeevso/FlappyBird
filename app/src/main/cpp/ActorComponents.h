@@ -13,7 +13,6 @@ namespace Actors {
         std::shared_ptr<Texture> const GetCurrentFrameTexture() const { return *mItCurrentFrame; }
 
         virtual bool VInit(XmlElement * pData);
-        virtual void VPostInit();
         virtual void VUpdate(double deltaSec);
 
     private:
@@ -32,6 +31,23 @@ namespace Actors {
 
 
 
+    class RenderComponent : public ActorComponent {
+    public:
+        RenderComponent();
+        virtual ComponentId VGetId() const { return COMPONENT_ID; }
+
+        virtual bool VInit(XmlElement * pData);
+
+        std::shared_ptr<Texture> const GetTexture() const { return mPtrTexture; }
+
+    private:
+        std::shared_ptr<Texture> mPtrTexture;
+
+        static ComponentId const COMPONENT_ID;
+    };
+
+
+
     class PhysicsComponent : public ActorComponent {
     public:
         PhysicsComponent();
@@ -41,7 +57,6 @@ namespace Actors {
         virtual bool VInit(XmlElement * pData);
         virtual void VPostInit();
         virtual void VUpdate(double deltaSec);
-        void SetVelocityDefault() { mVelocity = mVelocityDefault; }
 
         void SetPosition(glm::vec2 const & pos) { mPosition = pos; }
         void SetSize(glm::vec2 const & size) { mSize = size; }
@@ -62,8 +77,9 @@ namespace Actors {
         glm::vec2 mVelocity;
         glm::vec2 mAcceleration;
         glm::vec2 mForce;
+        bool mPositionCenter;
 
-        glm::vec2 mVelocityDefault;
         static ComponentId const COMPONENT_ID;
     };
+
 }

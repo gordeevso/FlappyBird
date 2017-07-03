@@ -4,18 +4,31 @@
 
 namespace Actors {
 
-    ActorComponent * CreateRenderComponent() {
+    ActorComponent * CreateRenderAnimationComponent() {
         return new RenderAnimationComponent;
     }
 
-    PhysicsComponent * CreatePhysicsComponent() {
+    ActorComponent * CreatePhysicsComponent() {
         return new PhysicsComponent;
+    }
+
+    ActorComponent * CreateRenderComponent() {
+        return new RenderComponent;
     }
 
     ActorFactory::ActorFactory() : mLastActorId {} {
         {
             auto result = mActorComponentCreators.insert(
-                    std::make_pair("RenderAnimationComponent", CreateRenderComponent));
+                    std::make_pair("RenderAnimationComponent", CreateRenderAnimationComponent));
+            if (!result.second) {
+                LogWrapper::error("Can't add creator for component");
+                assert(result.second);
+            }
+        }
+
+        {
+            auto result = mActorComponentCreators.insert(
+                    std::make_pair("RenderComponent", CreateRenderComponent));
             if (!result.second) {
                 LogWrapper::error("Can't add creator for component");
                 assert(result.second);

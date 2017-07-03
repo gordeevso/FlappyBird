@@ -9,10 +9,13 @@
 	<PhysicsComponent
 		ScaleX="1" ScaleMaxX="5"
 		ScaleY="1" ScaleMaxY="2"
+		ScaleSizeX="0" ScaleMaxSizeX="0"
+		ScaleSizeY="1" ScaleMaxSizeY="10"
 		VelocityX="0.0"
 		VelocityY="0.0"
 		AccelerationX="0.0"
-		AccelerationY="4000.0">
+		AccelerationY="200.0"
+		PositionCenter="true">
 	</PhysicsComponent>
 
 </Actor>

@@ -97,14 +97,17 @@ void SpriteRenderer::DrawSprite(std::shared_ptr<Texture> const texture,
 }
 
 void SpriteRenderer::Draw(std::shared_ptr<Actors::Actor> ptrActor) {
-    auto ptrWeakRenderComponent = ptrActor->GetComponent<Actors::RenderAnimationComponent>("RenderAnimationComponent");
-    auto ptrStrongRenderComponent = Actors::MakeStrongPtr(ptrWeakRenderComponent);
-
     auto ptrWeakPhysicsComponent = ptrActor->GetComponent<Actors::PhysicsComponent>("PhysicsComponent");
     auto ptrStrongPhysicsComponent = Actors::MakeStrongPtr(ptrWeakPhysicsComponent);
 
+    std::weak_ptr<Actors::RenderAnimationComponent> ptrWeakRenderComponent = ptrActor->GetComponent<Actors::RenderAnimationComponent>("RenderAnimationComponent");
+    std::shared_ptr<Actors::RenderAnimationComponent> ptrStrongRenderComponent = Actors::MakeStrongPtr(ptrWeakRenderComponent);
+
+    std::weak_ptr<Actors::RenderComponent> ptrTimed = ptrActor->GetComponent<Actors::RenderComponent>("RenderComponent");
+    std::shared_ptr<Actors::RenderComponent> ptrStrongTimed = Actors::MakeStrongPtr(ptrTimed);
+
     DrawSprite(
-        ptrStrongRenderComponent->GetCurrentFrameTexture(),
+        ptrStrongRenderComponent ? ptrStrongRenderComponent->GetCurrentFrameTexture() : ptrStrongTimed->GetTexture(),
         ptrStrongPhysicsComponent->GetPosition(),
         ptrStrongPhysicsComponent->GetSize(),
         ptrStrongPhysicsComponent->GetRotation(),

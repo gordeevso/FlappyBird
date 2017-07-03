@@ -1,5 +1,7 @@
 #pragma once
 
+#include <random>
+
 #include "Actor.h"
 #include "ActorFactory.h"
 #include "SpriteRenderer.h"
@@ -16,25 +18,45 @@ public:
 
 private:
     void CalculateTapVelocity(glm::vec2 & velocity);
-
+    void CalculateColumnPos();
+    bool IsSeen();
 private:
     enum class OwlState {
-        DEFAULT,
+        FALL,
         TAP,
-        TAP_CHECK_TARGET_DISTANCE
+    };
+
+    enum class ColumnState {
+        WAIT,
+        CALCULATE,
+        SHOW
     };
 
 private:
     std::shared_ptr<Actors::Actor> mPtrBird;
+    std::shared_ptr<Actors::Actor> mPtrTopTree;
+    std::shared_ptr<Actors::Actor> mPtrBottomTree;
+
+    std::shared_ptr<Actors::PhysicsComponent> mPtrPBird;
+    std::shared_ptr<Actors::PhysicsComponent> mPtrPTop;
+    std::shared_ptr<Actors::PhysicsComponent> mPtrPBottom;
+
     std::unique_ptr<Actors::ActorFactory> mPtrActorFactory;
+
     std::unique_ptr<SpriteRenderer> mPtrSpriteRenderer;
-    std::shared_ptr<Actors::PhysicsComponent> mPtrBirdPhysics;
+
+
     float mTargetTapDistance;
     float mTargetTapTime;
-    float mTargetTapTimeCollector;
     bool mCheckInputTap;
+    float mTargetColumnTopDownDistance;
+    float mTargetColumnLeftRightDistance;
+    float mTargetColumnMinBorderDistance;
 
-    OwlState mCurrentState;
+    OwlState mBirdState;
+    ColumnState mColumnState;
+
+    std::minstd_rand0 mRandGenerator;
 };
 
 

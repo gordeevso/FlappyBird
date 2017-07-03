@@ -69,3 +69,7 @@ float Texture::GetWidth() const noexcept {
 float Texture::GetHeight() const noexcept {
     return mHeight;
 }
+
+float Texture::GetRatio() const noexcept {
+    return mAspectRatio;
+}

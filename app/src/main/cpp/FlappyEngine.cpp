@@ -16,7 +16,7 @@ void FlappyEngine::Init() {
         ResourceManager::LoadTexture("textures/bird2.png", GL_TRUE, "bird2");
         ResourceManager::LoadTexture("textures/bird3.png", GL_TRUE, "bird3");
         ResourceManager::LoadTexture("textures/bird4.png", GL_TRUE, "bird4");
-        ResourceManager::LoadTexture("textures/tree.png", GL_TRUE, "tree");
+        ResourceManager::LoadTexture("textures/column.png", GL_TRUE, "column");
 
         mPtrScene.reset(new Scene);
 

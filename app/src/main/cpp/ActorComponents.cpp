@@ -4,6 +4,7 @@
 
 namespace Actors {
     ComponentId const RenderAnimationComponent::COMPONENT_ID {"RenderAnimationComponent"};
+    ComponentId const RenderComponent::COMPONENT_ID          {"RenderComponent"};
     ComponentId const PhysicsComponent::COMPONENT_ID         {"PhysicsComponent"};
 }
 
@@ -35,10 +36,6 @@ namespace Actors {
         return true;
     }
 
-    void RenderAnimationComponent::VPostInit() {
-
-    }
-
     void RenderAnimationComponent::VUpdate(double deltaSec) {
         mTimeCollector += deltaSec;
         if(mTimeCollector > mAnimationTime) {
@@ -63,13 +60,33 @@ namespace Actors {
 
 
 
+
+
+    RenderComponent::RenderComponent() : mPtrTexture{nullptr}
+    {}
+
+    bool RenderComponent::VInit(XmlElement *pData) {
+        assert(pData);
+        std::string texName = pData->Attribute("Texture");
+        mPtrTexture = ResourceManager::GetTexture(texName);
+
+        return true;
+    }
+
+
+
+
+
+
+
+
     PhysicsComponent::PhysicsComponent() : mPosition{},
                                            mSize{},
                                            mDegrees{},
                                            mVelocity{},
                                            mAcceleration{},
                                            mForce{},
-                                           mVelocityDefault{}
+                                           mPositionCenter{}
     {}
 
     bool PhysicsComponent::VInit(XmlElement *pData) {
@@ -89,12 +106,23 @@ namespace Actors {
         mPosition = {posX, posY};
         LogWrapper::debug("Position: x = %f, y = %f", posX, posY);
 
+        int32_t scaleSizeX = pData->IntAttribute("ScaleSizeX");
+        int32_t scaleSizeY = pData->IntAttribute("ScaleSizeY");
+        int32_t scaleMaxSizeX = pData->IntAttribute("ScaleMaxSizeX");
+        int32_t scaleMaxSizeY = pData->IntAttribute("ScaleMaxSizeY");
+
+        GLfloat sizeX = scaleSizeX == 0 || scaleMaxSizeX == 0 ? 0.f : static_cast<GLfloat>(GLContextWrapper::GetInstance().GetScreenWidth()) / scaleMaxSizeX * scaleSizeX;
+        GLfloat sizeY = scaleSizeY == 0 || scaleMaxSizeY == 0 ? 0.f : static_cast<GLfloat>(GLContextWrapper::GetInstance().GetScreenHeight()) / scaleMaxSizeY * scaleSizeY;
+        mSize = {sizeX, sizeY};
+
+        LogWrapper::debug("Size X = %f, Y = %f", sizeX, sizeY);
+
         mVelocity.x = pData->FloatAttribute("VelocityX");
         mVelocity.y = pData->FloatAttribute("VelocityY");
         mAcceleration.x = pData->FloatAttribute("AccelerationX");
         mAcceleration.y = pData->FloatAttribute("AccelerationY");
 
-        mVelocityDefault = mVelocity;
+        mPositionCenter = pData->BoolAttribute("PositionCenter");
 
         LogWrapper::debug("Velocity = %f %f", mVelocity.x, mVelocity.y);
         LogWrapper::debug("Acceleration = %f %f", mAcceleration.x, mAcceleration.y);
@@ -104,17 +132,47 @@ namespace Actors {
 
     void PhysicsComponent::VPostInit() {
         assert(mPtrOwner);
-        auto pWeakRenderComponent = mPtrOwner->GetComponent<Actors::RenderAnimationComponent>("RenderAnimationComponent");
-        auto pStrongRenderComponent = Actors::MakeStrongPtr(pWeakRenderComponent);
 
-        assert(pStrongRenderComponent);
-        auto ptrTexture = pStrongRenderComponent->GetCurrentFrameTexture();
+        auto pWeakRenderAnimationComponent = mPtrOwner->GetComponent<Actors::RenderAnimationComponent>("RenderAnimationComponent");
+        auto pStrongRenderAnimationComponent = Actors::MakeStrongPtr(pWeakRenderAnimationComponent);
+
+        std::shared_ptr<Texture> ptrTexture {nullptr};
+        if(pStrongRenderAnimationComponent) {
+            ptrTexture = pStrongRenderAnimationComponent->GetCurrentFrameTexture();
+        }
+        else {
+            auto pWeakRenderComponent = mPtrOwner->GetComponent<Actors::RenderComponent>("RenderComponent");
+            auto pStrongRenderComponent = Actors::MakeStrongPtr(pWeakRenderComponent);
+
+            assert(pStrongRenderComponent);
+            ptrTexture = pStrongRenderComponent->GetTexture();
+        }
 
         assert(ptrTexture);
-        mSize.x = ptrTexture->GetWidth();
-        mSize.y = ptrTexture->GetHeight();
+
+        if(mSize.x > 0.f || mSize.y > 0.f) {
+            if(mSize.y > 0.f) {
+                float scaleY = mSize.y / ptrTexture->GetHeight() ;
+                mSize.x = ptrTexture->GetWidth() * scaleY;
+            }
+            else {
+                float scaleX = mSize.x / ptrTexture->GetWidth();
+                mSize.y = ptrTexture->GetHeight() * scaleX;
+            }
+        }
+        else {
+            mSize.x = ptrTexture->GetWidth();
+            mSize.y = ptrTexture->GetHeight();
+        }
+
+        LogWrapper::debug("Final size %f %f", mSize.x, mSize.y);
+
+        if(!mPositionCenter) return;
+
         mPosition.x -= mSize.x / 2.f;
         mPosition.y -= mSize.y / 2.f;
+
+        LogWrapper::debug("Position center %f %f", mPosition.x, mPosition.y);
 
     }
 
@@ -122,7 +180,7 @@ namespace Actors {
         auto dt = static_cast<float>(deltaSec);
 
         mVelocity.y += mAcceleration.y * dt;
-        mPosition.y += mVelocity.y * dt + mAcceleration.y * dt * dt / 2.f;
+        mPosition.y += mVelocity.y * dt;
 
         mVelocity.x += mAcceleration.x * dt;
         mPosition.x += mVelocity.x * dt;

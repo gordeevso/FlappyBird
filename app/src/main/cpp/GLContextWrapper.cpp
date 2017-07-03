@@ -116,7 +116,7 @@ EGLint GLContextWrapper::Swap() {
     EGLint errorCode = eglGetError();
     if(errorCode != EGL_SUCCESS) {
         LogWrapper::info("GLCONTEXT SWAP %x", errorCode);
-        assert(errorCode == EGL_SUCCESS);
+//        assert(errorCode == EGL_SUCCESS);
     }
 
     if (!swapBuffersRes) {
