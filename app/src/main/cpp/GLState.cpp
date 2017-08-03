@@ -1,10 +1,11 @@
 #include <string>
 #include <cassert>
 
-#include "GLContextWrapper.h"
-#include "LogWrapper.h"
+#include "GLState.h"
+#include "Android.h"
+#include "Log.h"
 
-GLContextWrapper::GLContextWrapper()
+GLState::GLState()
         : mDisplay(EGL_NO_DISPLAY),
           mSurface(EGL_NO_SURFACE),
           mContext(EGL_NO_CONTEXT),
@@ -13,15 +14,14 @@ GLContextWrapper::GLContextWrapper()
           mEGLContextInitialized(false)
 {}
 
-GLContextWrapper::~GLContextWrapper() {
+GLState::~GLState() {
     DestroyContext();
 }
 
-bool GLContextWrapper::Init(ANativeWindow* window) {
+bool GLState::Init() {
     if (mEGLContextInitialized)
         return true;
 
-    mPtrWindow = window;
     InitEGLSurface();
     InitEGLContext();
 
@@ -30,7 +30,7 @@ bool GLContextWrapper::Init(ANativeWindow* window) {
     return true;
 }
 
-bool GLContextWrapper::InitEGLSurface() {
+bool GLState::InitEGLSurface() {
     mDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     eglInitialize(mDisplay, 0, 0);
 
@@ -75,47 +75,47 @@ bool GLContextWrapper::InitEGLSurface() {
     }
 
     EGLint errorCode = eglGetError();
-    LogWrapper::info("GLCONTEXT INIT EGL SURFACE %x", errorCode);
+    Log::info("GLCONTEXT INIT EGL SURFACE %x", errorCode);
     assert(errorCode == EGL_SUCCESS);
 
 
-    mSurface = eglCreateWindowSurface(mDisplay, mConfig, mPtrWindow, NULL);
+    mSurface = eglCreateWindowSurface(mDisplay, mConfig, Android::GetInstance().GetAndroidApp()->window, NULL);
     eglQuerySurface(mDisplay, mSurface, EGL_WIDTH, &mScreenWidth);
     eglQuerySurface(mDisplay, mSurface, EGL_HEIGHT, &mScreenHeight);
 
     errorCode = eglGetError();
-    LogWrapper::info("GLCONTEXT INIT EGL CREATE SURFACE %x", errorCode);
+    Log::info("GLCONTEXT INIT EGL CREATE SURFACE %x", errorCode);
     assert(errorCode == EGL_SUCCESS);
 
     return true;
 }
 
-bool GLContextWrapper::InitEGLContext() {
+bool GLState::InitEGLContext() {
     const EGLint context_attribs[] = {EGL_CONTEXT_CLIENT_VERSION,
-                                      3,
+                                      2,
                                       EGL_NONE};
     mContext = eglCreateContext(mDisplay, mConfig, NULL, context_attribs);
 
     EGLint errorCode = eglGetError();
-    LogWrapper::info("GLCONTEXT INIT EGL CREATE CONTEXT %x", errorCode);
+    Log::info("GLCONTEXT INIT EGL CREATE CONTEXT %x", errorCode);
     assert(errorCode == EGL_SUCCESS);
 
     eglMakeCurrent(mDisplay, mSurface, mSurface, mContext);
 
     errorCode = eglGetError();
-    LogWrapper::info("GLCONTEXT INIT EGL MAKECURRENT %x", errorCode);
+    Log::info("GLCONTEXT INIT EGL MAKECURRENT %x", errorCode);
     assert(errorCode == EGL_SUCCESS);
 
     mIsContextValid = true;
     return true;
 }
 
-EGLint GLContextWrapper::Swap() {
+EGLint GLState::Swap() {
     EGLBoolean swapBuffersRes = eglSwapBuffers(mDisplay, mSurface);
 
     EGLint errorCode = eglGetError();
     if(errorCode != EGL_SUCCESS) {
-        LogWrapper::info("GLCONTEXT SWAP %x", errorCode);
+        Log::info("GLCONTEXT SWAP %x", errorCode);
 //        assert(errorCode == EGL_SUCCESS);
     }
 
@@ -136,7 +136,7 @@ EGLint GLContextWrapper::Swap() {
     return EGL_SUCCESS;
 }
 
-void GLContextWrapper::DestroyContext() {
+void GLState::DestroyContext() {
     if (mDisplay != EGL_NO_DISPLAY) {
         eglMakeCurrent(mDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         if (mContext != EGL_NO_CONTEXT) {
@@ -150,7 +150,7 @@ void GLContextWrapper::DestroyContext() {
     }
 
     EGLint errorCode = eglGetError();
-    LogWrapper::info("GLCONTEXT DESTROY CONTEXT %x", errorCode);
+    Log::info("GLCONTEXT DESTROY CONTEXT %x", errorCode);
     assert(errorCode == EGL_SUCCESS);
 
     mDisplay = EGL_NO_DISPLAY;
@@ -159,36 +159,48 @@ void GLContextWrapper::DestroyContext() {
     mIsContextValid = false;
 }
 
-EGLint GLContextWrapper::Resume(ANativeWindow* window) {
-    GLContextWrapper::Init(window);
+EGLint GLState::Resume() {
+    if(mEGLContextInitialized) {
+        mSurface = eglCreateWindowSurface(mDisplay, mConfig, Android::GetInstance().GetAndroidApp()->window, NULL);
+        eglQuerySurface(mDisplay, mSurface, EGL_WIDTH, &mScreenWidth);
+
+        eglQuerySurface(mDisplay, mSurface, EGL_HEIGHT, &mScreenHeight);
+
+        eglMakeCurrent(mDisplay, mSurface, mSurface, mContext);
+
+    }
+    else {
+        Init();
+    }
+
+    glViewport(0, 0, mScreenWidth, mScreenHeight);
 
     EGLint errorCode = eglGetError();
-    LogWrapper::info("GLCONTEXT RESUME %x", errorCode);
+    Log::info("GLCONTEXT RESUME %x", errorCode);
     assert(errorCode == EGL_SUCCESS);
 
     return errorCode;
 }
 
-void GLContextWrapper::Suspend() {
-    if (mSurface != EGL_NO_SURFACE) {
-        eglDestroySurface(mDisplay, mSurface);
+void GLState::Suspend() {
+    eglMakeCurrent(mDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
 
-        EGLint errorCode = eglGetError();
-        LogWrapper::info("GLCONTEXT SUSPEND %x", errorCode);
-        assert(errorCode == EGL_SUCCESS);
+    eglDestroySurface(mDisplay, mSurface);
+    mSurface = EGL_NO_SURFACE;
 
-        mSurface = EGL_NO_SURFACE;
-    }
+    EGLint errorCode = eglGetError();
+    Log::info("GLCONTEXT SUSPEND %x", errorCode);
+    assert(errorCode == EGL_SUCCESS);
 }
 
-bool GLContextWrapper::Invalidate() {
+bool GLState::Invalidate() {
     DestroyContext();
 
     mEGLContextInitialized = false;
     return true;
 }
 
-bool GLContextWrapper::CheckExtension(const char* extension) {
+bool GLState::CheckExtension(const char* extension) {
     if (extension == NULL) return false;
 
     std::string extensions = std::string((char*)glGetString(GL_EXTENSIONS));

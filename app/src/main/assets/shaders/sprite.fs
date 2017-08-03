@@ -1,13 +1,11 @@
-#version 300 es
-
+precision mediump float;
 // fragment shader for sprite rendering
-in vec2 TexCoords;
-out vec4 color;
+varying vec2 TexCoords;
 
 uniform sampler2D sprite;
 uniform vec3 spriteColor;
 
 void main()
 {
-    color = vec4(spriteColor, 1.0) * texture(sprite, TexCoords);
+    gl_FragColor = vec4(spriteColor, 1.0) * texture2D(sprite, TexCoords);
 }

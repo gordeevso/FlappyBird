@@ -10,7 +10,7 @@
 #include <glm/glm.hpp>
 #include <tinyxml2.h>
 
-#include "LogWrapper.h"
+#include "Log.h"
 #include "Texture.h"
 #include "ResourceManager.h"
 

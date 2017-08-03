@@ -1,6 +1,6 @@
 #include "TouchDetector.h"
 
-#include "LogWrapper.h"
+#include "Log.h"
 
 TouchDetector::TouchDetector() {
     mDPFactor = 1.f;
@@ -39,7 +39,7 @@ TouchState TapDetector::Detect(AInputEvent const * motion_event) {
                     float x = AMotionEvent_getX(motion_event, 0) - mDownX;
                     float y = AMotionEvent_getY(motion_event, 0) - mDownY;
                     if (x * x + y * y < TOUCH_SLOP * TOUCH_SLOP * mDPFactor) {
-                        LogWrapper::info("TapDetector: Tap detected");
+                        Log::info("TapDetector: Tap detected");
                         return GESTURE_STATE_ACTION;
                     }
                 }

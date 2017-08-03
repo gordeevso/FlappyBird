@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.4.1)
 
 add_library( FlappyPelican SHARED
-             src/main/cpp/GLContextWrapper.cpp
+             src/main/cpp/GLState.cpp
              src/main/cpp/Actor.cpp
              src/main/cpp/ActorFactory.cpp
              src/main/cpp/ActorComponents.cpp
              src/main/cpp/Scene.cpp
              src/main/cpp/Android.cpp
              src/main/cpp/TimeManager.cpp
-             src/main/cpp/LogWrapper.cpp
+             src/main/cpp/Log.cpp
              src/main/cpp/TouchDetector.cpp
              src/main/cpp/FlappyEngine.cpp
              src/main/cpp/ResourceManager.cpp

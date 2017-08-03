@@ -21,7 +21,7 @@ namespace Actors {
             auto result = mActorComponentCreators.insert(
                     std::make_pair("RenderAnimationComponent", CreateRenderAnimationComponent));
             if (!result.second) {
-                LogWrapper::error("Can't add creator for component");
+                Log::error("Can't add creator for component");
                 assert(result.second);
             }
         }
@@ -30,7 +30,7 @@ namespace Actors {
             auto result = mActorComponentCreators.insert(
                     std::make_pair("RenderComponent", CreateRenderComponent));
             if (!result.second) {
-                LogWrapper::error("Can't add creator for component");
+                Log::error("Can't add creator for component");
                 assert(result.second);
             }
         }
@@ -39,7 +39,7 @@ namespace Actors {
             auto result = mActorComponentCreators.insert(
                     std::make_pair("PhysicsComponent", CreatePhysicsComponent));
             if (!result.second) {
-                LogWrapper::error("Can't add creator for component");
+                Log::error("Can't add creator for component");
                 assert(result.second);
             }
         }
@@ -52,7 +52,7 @@ namespace Actors {
         ResourceManager::Read(actorResource, xmlBuffer);
         auto result = actorXml.Parse(std::string(xmlBuffer.begin(), xmlBuffer.end()).c_str());
 
-        LogWrapper::debug("LOAD ACTOR %s", actorResource.c_str());
+        Log::debug("LOAD ACTOR %s", actorResource.c_str());
         if (result != XMLError::XML_SUCCESS) {
             assert(result == XMLError::XML_SUCCESS);
             return StrongActorPtr {};
@@ -63,7 +63,7 @@ namespace Actors {
         assert(actorXmlRoot);
         StrongActorPtr ptrActor{new Actor{GetNextActorId()}};
         if (!ptrActor->Init(actorXmlRoot)) {
-            LogWrapper::error("Failed to initialize actor: %s", actorResource.c_str());
+            Log::error("Failed to initialize actor: %s", actorResource.c_str());
             assert(false);
             return StrongActorPtr();
         }
@@ -80,7 +80,7 @@ namespace Actors {
                 pComponent->SetOwner(ptrActor);
             }
             else {
-                LogWrapper::debug("Can't create component");
+                Log::debug("Can't create component");
                 assert(pComponent);
                 return StrongActorPtr();
             }
@@ -88,13 +88,13 @@ namespace Actors {
 
         // Now that the actor has been fully created, run the post init phase
         ptrActor->PostInit();
-        LogWrapper::debug("LOAD ACTOR %s SUCCESS", actorResource.c_str());
+        Log::debug("LOAD ACTOR %s SUCCESS", actorResource.c_str());
         return ptrActor;
     }
 
     StrongActorComponentPtr ActorFactory::CreateComponent(XmlElement *pData) {
         std::string name(pData->Value());
-        LogWrapper::debug("LOAD COMPONENT %s", name.c_str());
+        Log::debug("LOAD COMPONENT %s", name.c_str());
 
         StrongActorComponentPtr pComponent {nullptr};
         auto findIt = mActorComponentCreators.find(name);
@@ -103,26 +103,26 @@ namespace Actors {
             pComponent.reset(creator());
         }
         else {
-            LogWrapper::error("Couldn’t find ActorComponent named %s", name.c_str());
+            Log::error("Couldn’t find ActorComponent named %s", name.c_str());
             assert(findIt != mActorComponentCreators.end());
             return StrongActorComponentPtr(); // fail
         }
         // initialize the component if we found one
         if (pComponent) {
             if (!pComponent->VInit(pData)) {
-                LogWrapper::error("Component failed to initialize: %s", name.c_str());
+                Log::error("Component failed to initialize: %s", name.c_str());
                 assert(false);
                 return StrongActorComponentPtr();
             }
         }
         else {
-            LogWrapper::error("Component is NULL: %s", name.c_str());
+            Log::error("Component is NULL: %s", name.c_str());
             assert(pComponent);
         }
         // pComponent will be NULL if the component wasn’t found. This isn’t
         // necessarily an error since you might have a custom CreateComponent()
         // function in a subclass.
-        LogWrapper::debug("LOAD COMPONENT %s SUCCESS", name.c_str());
+        Log::debug("LOAD COMPONENT %s SUCCESS", name.c_str());
         return pComponent;
     }
 

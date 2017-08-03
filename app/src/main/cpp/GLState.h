@@ -1,31 +1,31 @@
 #pragma once
 
 #include <EGL/egl.h>
-#include <GLES3/gl3.h>
+#include <GLES2/gl2.h>
 
-class GLContextWrapper {
+class GLState {
 public:
-    static GLContextWrapper & GetInstance() {
-        static GLContextWrapper instance;
+    static GLState & GetInstance() {
+        static GLState instance;
         return instance;
     }
 
 private:
-    GLContextWrapper();
-    GLContextWrapper(GLContextWrapper const&) = delete;
-    void operator=(GLContextWrapper const&) = delete;
+    GLState();
+    GLState(GLState const&) = delete;
+    void operator=(GLState const&) = delete;
 
 public:
-    ~GLContextWrapper();
+    ~GLState();
 
 
 
-    bool Init(ANativeWindow* window);
+    bool Init();
     EGLint Swap();
     bool Invalidate();
 
     void Suspend();
-    EGLint Resume(ANativeWindow* window);
+    EGLint Resume();
 
     bool IsInitialized() const { return mEGLContextInitialized; }
 

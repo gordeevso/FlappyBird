@@ -46,11 +46,18 @@ public:
     void onGainFocus();
     void onLostFocus();
 
+private:
+
+    enum class GameState {
+        ACTIVE,
+        PAUSE
+    };
 
 private:
 
     std::unique_ptr<TimeManager> mPtrTimeManager;
-    std::unique_ptr<Scene> mPtrScene;
+    std::unique_ptr<Scene> mPtrGameScene;
+    std::unique_ptr<PauseScene> mPtrPauseScene;
     bool mInitializedResource;
-
+    GameState mGameState;
 };

@@ -4,7 +4,7 @@
 
 #include "Android.h"
 #include "FlappyEngine.h"
-#include "LogWrapper.h"
+#include "Log.h"
 
 Android::Android() : mPtrAndroidApp {nullptr},
                      mAssetManager {nullptr},
@@ -27,7 +27,7 @@ void Android::Init(android_app * androidApp) {
 
 void Android::Run() {
     app_dummy();
-    LogWrapper::debug("FlappyEngine::Run() started");
+    Log::debug("FlappyEngine::Run() started");
 
     while(true) {
         int id;
@@ -49,25 +49,24 @@ void Android::Run() {
             }
 
             if (mPtrAndroidApp->destroyRequested != 0) {
+                Log::debug("Finishing activity from main loop");
                 FlappyEngine::GetInstance().onDestroyWindow();
-                GLContextWrapper::GetInstance().Invalidate();
+                GLState::GetInstance().Invalidate();
+                mFinishActivity = true;
+                ANativeActivity_finish(mPtrAndroidApp->activity);
                 return;
             }
         }
 
         if (mHasFocus && !mFinishActivity) {
-            if (!FlappyEngine::GetInstance().onStep()) {
-                mFinishActivity = true;
-                LogWrapper::debug("Finishing activity from main loop");
-                ANativeActivity_finish(mPtrAndroidApp->activity);
-            }
+            FlappyEngine::GetInstance().onStep();
         }
     }
 }
 
 
 void Android::GetFocus() {
-    LogWrapper::debug("FlappyEngine::GetFocus()");
+    Log::debug("FlappyEngine::GetFocus()");
     if (!mHasFocus && mPtrAndroidApp->window) {
         mHasFocus = true;
         mFinishActivity = false;
@@ -75,9 +74,9 @@ void Android::GetFocus() {
 }
 
 void Android::GiveFocus() {
-    LogWrapper::debug("FlappyEngine::GiveFocus()");
+    Log::debug("FlappyEngine::GiveFocus()");
     if (mHasFocus) {
-        GLContextWrapper::GetInstance().Suspend();
+//        GLState::GetInstance().Suspend();
         mHasFocus = false;
     }
 }
@@ -105,51 +104,52 @@ int32_t Android::AndroidTouchHandler(android_app *androidApp, AInputEvent *input
 void Android::HandleState(int32_t cmd) {
     switch (cmd) {
         case APP_CMD_CONFIG_CHANGED:
-            LogWrapper::debug("APP_CMD_CONFIG_CHANGED");
+            Log::debug("APP_CMD_CONFIG_CHANGED");
             FlappyEngine::GetInstance().onConfigurationChanged();
             break;
 
 
         case APP_CMD_INIT_WINDOW:
-            LogWrapper::debug("APP_CMD_INIT_WINDOW");
+            Log::debug("APP_CMD_INIT_WINDOW");
         case APP_CMD_WINDOW_RESIZED:
-            LogWrapper::debug("APP_CMD_WINDOW_RESIZED");
-            GLContextWrapper::GetInstance().Resume(mPtrAndroidApp->window);
+            Log::debug("APP_CMD_WINDOW_RESIZED");
+            GLState::GetInstance().Resume();
             FlappyEngine::GetInstance().Init();
             break;
 
 
         case APP_CMD_DESTROY:
-            LogWrapper::debug("APP_CMD_DESTROY");
+            Log::debug("APP_CMD_DESTROY");
             FlappyEngine::GetInstance().onDestroy();
+            GLState::GetInstance().Invalidate();
             break;
 
         case APP_CMD_GAINED_FOCUS:
-            LogWrapper::debug("APP_CMD_GAINED_FOCUS");
+            Log::debug("APP_CMD_GAINED_FOCUS");
             Android::GetFocus();
             FlappyEngine::GetInstance().onGainFocus();
             break;
 
         case APP_CMD_PAUSE:
-            LogWrapper::debug("APP_CMD_PAUSE");
+            Log::debug("APP_CMD_PAUSE");
         case APP_CMD_LOST_FOCUS:
-            LogWrapper::debug("APP_CMD_LOST_FOCUS");
+            Log::debug("APP_CMD_LOST_FOCUS");
             FlappyEngine::GetInstance().onLostFocus();
             Android::GiveFocus();
             break;
 
         case APP_CMD_LOW_MEMORY:
-            LogWrapper::debug("APP_CMD_LOW_MEMORY");
+            Log::debug("APP_CMD_LOW_MEMORY");
             FlappyEngine::GetInstance().onLowMemory();
             break;
 
         case APP_CMD_RESUME:
-            LogWrapper::debug("APP_CMD_RESUME");
+            Log::debug("APP_CMD_RESUME");
             FlappyEngine::GetInstance().onResume();
             break;
 
         case APP_CMD_SAVE_STATE:
-            LogWrapper::debug("APP_CMD_SAVE_STATE");
+            Log::debug("APP_CMD_SAVE_STATE");
 //            mPtrAndroidApp->savedState = malloc(sizeof(struct saved_state));
 //            *((struct saved_state*)mPtrAndroidApp->savedState) = mState;
 //            mPtrAndroidApp->savedStateSize = sizeof(struct saved_state);
@@ -160,19 +160,19 @@ void Android::HandleState(int32_t cmd) {
             break;
 
         case APP_CMD_START:
-            LogWrapper::debug("APP_CMD_START");
+            Log::debug("APP_CMD_START");
             FlappyEngine::GetInstance().onStart();
             break;
 
         case APP_CMD_STOP:
-            LogWrapper::debug("APP_CMD_STOP");
+            Log::debug("APP_CMD_STOP");
             FlappyEngine::GetInstance().onStop();
             break;
 
         case APP_CMD_TERM_WINDOW:
-            LogWrapper::debug("APP_CMD_TERM_WINDOW");
+            Log::debug("APP_CMD_TERM_WINDOW");
             FlappyEngine::GetInstance().onDestroyWindow();
-            GLContextWrapper::GetInstance().Invalidate();
+            GLState::GetInstance().Suspend();
             break;
 
         default:
@@ -186,7 +186,7 @@ int32_t Android::HandleInput(AInputEvent *inputEvent) {
         TouchState tapState = mPtrTapDetector->Detect(inputEvent);
 
         if(tapState == GESTURE_STATE_ACTION) {
-            LogWrapper::debug("TAP");
+            Log::debug("TAP");
             mTapped = true;
         }
 

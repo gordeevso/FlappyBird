@@ -1,9 +1,9 @@
-#include "LogWrapper.h"
+#include "Log.h"
 #include <android/log.h>
 
 char const APP_NAME [] = "FlappyPelican";
 
-void LogWrapper::info(const char* pMessage, ...)
+void Log::info(const char* pMessage, ...)
 {
     va_list varArgs;
     va_start(varArgs, pMessage);
@@ -12,7 +12,7 @@ void LogWrapper::info(const char* pMessage, ...)
     va_end(varArgs);
 }
 
-void LogWrapper::error(const char* pMessage, ...)
+void Log::error(const char* pMessage, ...)
 {
     va_list varArgs;
     va_start(varArgs, pMessage);
@@ -21,7 +21,7 @@ void LogWrapper::error(const char* pMessage, ...)
     va_end(varArgs);
 }
 
-void LogWrapper::warn(const char* pMessage, ...)
+void Log::warn(const char* pMessage, ...)
 {
     va_list varArgs;
     va_start(varArgs, pMessage);
@@ -30,7 +30,7 @@ void LogWrapper::warn(const char* pMessage, ...)
     va_end(varArgs);
 }
 
-void LogWrapper::debug(const char* pMessage, ...)
+void Log::debug(const char* pMessage, ...)
 {
     va_list varArgs;
     va_start(varArgs, pMessage);

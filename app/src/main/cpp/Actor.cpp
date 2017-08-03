@@ -1,6 +1,6 @@
 
 #include "Actor.h"
-#include "GLContextWrapper.h"
+#include "GLState.h"
 
 namespace Actors {
 
@@ -10,7 +10,7 @@ namespace Actors {
     }
 
     Actor::~Actor() {
-        LogWrapper::debug("Destroying actor %d", mId);
+        Log::debug("Destroying actor %d", mId);
 
         assert(mComponents.empty());
     }
@@ -18,7 +18,7 @@ namespace Actors {
     bool Actor::Init(XmlElement* pData) {
 //        GCC_LOG("Actor", std::string("Initializing Actor ") + ToStr(mId));
         mType = pData->Attribute("Type");
-        LogWrapper::debug("Actor Type %s", mType.c_str());
+        Log::debug("Actor Type %s", mType.c_str());
 
         return true;
     }

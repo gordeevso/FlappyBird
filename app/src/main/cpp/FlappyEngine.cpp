@@ -1,12 +1,14 @@
 #include "FlappyEngine.h"
 #include "ResourceManager.h"
 #include "Android.h"
-#include "LogWrapper.h"
+#include "Log.h"
 #include "ActorFactory.h"
 
 FlappyEngine::FlappyEngine() : mPtrTimeManager {new TimeManager},
-                               mPtrScene {nullptr},
-                               mInitializedResource {false}
+                               mPtrGameScene {nullptr},
+                               mPtrPauseScene {nullptr},
+                               mInitializedResource {false},
+                               mGameState {GameState::PAUSE}
 {}
 
 void FlappyEngine::Init() {
@@ -18,7 +20,8 @@ void FlappyEngine::Init() {
         ResourceManager::LoadTexture("textures/bird4.png", GL_TRUE, "bird4");
         ResourceManager::LoadTexture("textures/column.png", GL_TRUE, "column");
 
-        mPtrScene.reset(new Scene);
+        mPtrGameScene.reset(new Scene);
+        mPtrPauseScene.reset(new PauseScene);
 
         mInitializedResource = true;
     }
@@ -37,22 +40,35 @@ bool FlappyEngine::onActivate() {
 }
 
 void FlappyEngine::onDeactivate() {
-    LogWrapper::debug("FlappyEngine::onDeactivate()");
+    Log::debug("FlappyEngine::onDeactivate()");
 }
 
 bool FlappyEngine::onStep() {
     mPtrTimeManager->UpdateMainLoop();
 
-//    LogWrapper::debug("FPS = %f", mPtrTimeManager->FramesPerSecond());
+//    Log::debug("FPS = %f", mPtrTimeManager->FramesPerSecond());
 
     glClearColor(0.f, 0.4f, 0.f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    mPtrScene->InputTap(Android::GetInstance().UpdateInput());
-    mPtrScene->Update(mPtrTimeManager->FrameTime());
-    mPtrScene->Draw();
+    switch (mGameState) {
+        case GameState::ACTIVE: {
+            mPtrGameScene->InputTap(Android::GetInstance().UpdateInput());
+            if (!mPtrGameScene->Update(mPtrTimeManager->FrameTime()))
+                mGameState = GameState::PAUSE;
+            mPtrGameScene->Draw();
+            break;
+        }
 
-    GLContextWrapper::GetInstance().Swap();
+        case GameState::PAUSE: {
+            if(Android::GetInstance().UpdateInput())
+                mGameState = GameState::ACTIVE;
+            break;
+        }
+    }
+
+
+    GLState::GetInstance().Swap();
     return true;
 }
 
@@ -95,7 +111,7 @@ void FlappyEngine::onCreateWindow() {
 }
 
 void FlappyEngine::onDestroyWindow() {
-    LogWrapper::debug("FlappyEngine::onDestroyWindow()");
+    Log::debug("FlappyEngine::onDestroyWindow()");
 //    mPtrGLContext->Invalidate();
 }
 

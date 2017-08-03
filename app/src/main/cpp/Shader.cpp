@@ -1,7 +1,7 @@
 
 #include "Shader.h"
-#include "LogWrapper.h"
-#include "GLContextWrapper.h"
+#include "Log.h"
+#include "GLState.h"
 
 Shader::~Shader() {
     DeleteProgram();
@@ -37,10 +37,10 @@ GLuint Shader::CreateShader(const GLenum shaderType,
         glGetShaderInfoLog(shader, sizeof(log), 0, log);
         switch(shaderType) {
             case GL_VERTEX_SHADER:
-                LogWrapper::error("Vertex shader error: %s", log);
+                Log::error("Vertex shader error: %s", log);
                 break;
             case GL_FRAGMENT_SHADER:
-                LogWrapper::error("Fragment shader error: %s", log);
+                Log::error("Fragment shader error: %s", log);
                 break;
         }
 
@@ -56,7 +56,7 @@ GLuint Shader::CreateShader(const GLenum shaderType,
 
 void Shader::CreateProgram(const std::string& vertexShaderCode,
                            const std::string& fragmentShaderCode) {
-    assert(GLContextWrapper::GetInstance().IsInitialized());
+    assert(GLState::GetInstance().IsInitialized());
 
     GLuint vertexShader = CreateShader(GL_VERTEX_SHADER, vertexShaderCode);
     GLuint fragmentShader = CreateShader(GL_FRAGMENT_SHADER, fragmentShaderCode);
@@ -76,7 +76,7 @@ void Shader::CreateProgram(const std::string& vertexShaderCode,
 
     if (link_result == GL_FALSE) {
         glGetProgramInfoLog(mId, sizeof(log), 0, log);
-        LogWrapper::error("Shader program error: %s", log);
+        Log::error("Shader program error: %s", log);
         throw std::runtime_error("error linking shader");
     }
 }

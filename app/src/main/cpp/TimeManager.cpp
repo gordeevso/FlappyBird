@@ -1,6 +1,6 @@
 
 #include "TimeManager.h"
-#include "LogWrapper.h"
+#include "Log.h"
 
 double const TARGET_FRAME_RATE = 60.0;
 double const TARGET_FRAME_TIME = 1.0 / TARGET_FRAME_RATE;

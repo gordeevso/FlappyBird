@@ -1,12 +1,10 @@
 
 #include "SpriteRenderer.h"
-#include "GLContextWrapper.h"
+#include "GLState.h"
 #include "SpriteRenderer.h"
 #include "ResourceManager.h"
 #include "ActorComponents.h"
 #include "Actor.h"
-
-#include <GLES3/gl3ext.h>
 
 std::string const SPRITE_SHADER = "sprite_shader";
 
@@ -26,8 +24,8 @@ void SpriteRenderer::InitSpriteRenderData() {
     mShader = ResourceManager::GetShader(SPRITE_SHADER);
 
     glm::mat4 projection = glm::ortho(0.0f,
-                                      static_cast<GLfloat>(GLContextWrapper::GetInstance().GetScreenWidth()),
-                                      static_cast<GLfloat>(GLContextWrapper::GetInstance().GetScreenHeight()),
+                                      static_cast<GLfloat>(GLState::GetInstance().GetScreenWidth()),
+                                      static_cast<GLfloat>(GLState::GetInstance().GetScreenHeight()),
                                       0.0f,
                                       -1.0f,
                                       1.0f);
@@ -93,6 +91,12 @@ void SpriteRenderer::DrawSprite(std::shared_ptr<Texture> const texture,
     glBindVertexArray(0);
 
     glDisable(GL_BLEND);
+
+    EGLint errorCode = eglGetError();
+    if(errorCode != EGL_SUCCESS) {
+        Log::info("DRAW %x", errorCode);
+        assert(errorCode == EGL_SUCCESS);
+    }
 
 }
 

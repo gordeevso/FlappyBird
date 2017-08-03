@@ -1,6 +1,7 @@
 
 #include "ActorComponents.h"
-#include "GLContextWrapper.h"
+#include "GLState.h"
+#include <glm/gtx/projection.hpp>
 
 namespace Actors {
     ComponentId const RenderAnimationComponent::COMPONENT_ID {"RenderAnimationComponent"};
@@ -16,7 +17,7 @@ namespace Actors {
 
     bool Actors::RenderAnimationComponent::VInit(Actors::XmlElement *pData)  {
         mAnimationTime = pData->FloatAttribute("AnimationTime");
-        LogWrapper::debug("Animation time %f", mAnimationTime);
+        Log::debug("Animation time %f", mAnimationTime);
         assert(mAnimationTime > 0.f);
 
         std::vector<std::string> texNames;
@@ -25,7 +26,7 @@ namespace Actors {
 
         assert(texNames.size() > 0);
         for(auto const & texName: texNames) {
-            LogWrapper::debug("Parsed name = %s", texName.c_str());
+            Log::debug("Parsed name = %s", texName.c_str());
             mTextures.push_back(ResourceManager::GetTexture(texName));
         }
 
@@ -90,8 +91,11 @@ namespace Actors {
     {}
 
     bool PhysicsComponent::VInit(XmlElement *pData) {
-        LogWrapper::debug("Init Physics component");
+        Log::debug("Init Physics component");
         assert(pData);
+
+        std::string type = pData->Attribute("Type");
+        mType = ParsePhysicsComponentType(type);
 
         int32_t scaleX = pData->IntAttribute("ScaleX");
         int32_t scaleY = pData->IntAttribute("ScaleY");
@@ -101,21 +105,21 @@ namespace Actors {
         assert(scaleX <= scaleMaxX && scaleX >= 0 && scaleMaxX >= 0);
         assert(scaleY <= scaleMaxY && scaleY >= 0 && scaleMaxY >= 0);
 
-        GLfloat posX = scaleX == 0 || scaleMaxX == 0 ? 0.f : static_cast<GLfloat>(GLContextWrapper::GetInstance().GetScreenWidth()) / scaleMaxX * scaleX;
-        GLfloat posY = scaleY == 0 || scaleMaxX == 0 ? 0.f : static_cast<GLfloat>(GLContextWrapper::GetInstance().GetScreenHeight()) / scaleMaxY * scaleY;
+        GLfloat posX = scaleX == 0 || scaleMaxX == 0 ? 0.f : static_cast<GLfloat>(GLState::GetInstance().GetScreenWidth()) / scaleMaxX * scaleX;
+        GLfloat posY = scaleY == 0 || scaleMaxX == 0 ? 0.f : static_cast<GLfloat>(GLState::GetInstance().GetScreenHeight()) / scaleMaxY * scaleY;
         mPosition = {posX, posY};
-        LogWrapper::debug("Position: x = %f, y = %f", posX, posY);
+        Log::debug("Position: x = %f, y = %f", posX, posY);
 
         int32_t scaleSizeX = pData->IntAttribute("ScaleSizeX");
         int32_t scaleSizeY = pData->IntAttribute("ScaleSizeY");
         int32_t scaleMaxSizeX = pData->IntAttribute("ScaleMaxSizeX");
         int32_t scaleMaxSizeY = pData->IntAttribute("ScaleMaxSizeY");
 
-        GLfloat sizeX = scaleSizeX == 0 || scaleMaxSizeX == 0 ? 0.f : static_cast<GLfloat>(GLContextWrapper::GetInstance().GetScreenWidth()) / scaleMaxSizeX * scaleSizeX;
-        GLfloat sizeY = scaleSizeY == 0 || scaleMaxSizeY == 0 ? 0.f : static_cast<GLfloat>(GLContextWrapper::GetInstance().GetScreenHeight()) / scaleMaxSizeY * scaleSizeY;
+        GLfloat sizeX = scaleSizeX == 0 || scaleMaxSizeX == 0 ? 0.f : static_cast<GLfloat>(GLState::GetInstance().GetScreenWidth()) / scaleMaxSizeX * scaleSizeX;
+        GLfloat sizeY = scaleSizeY == 0 || scaleMaxSizeY == 0 ? 0.f : static_cast<GLfloat>(GLState::GetInstance().GetScreenHeight()) / scaleMaxSizeY * scaleSizeY;
         mSize = {sizeX, sizeY};
 
-        LogWrapper::debug("Size X = %f, Y = %f", sizeX, sizeY);
+        Log::debug("Size X = %f, Y = %f", sizeX, sizeY);
 
         mVelocity.x = pData->FloatAttribute("VelocityX");
         mVelocity.y = pData->FloatAttribute("VelocityY");
@@ -124,8 +128,8 @@ namespace Actors {
 
         mPositionCenter = pData->BoolAttribute("PositionCenter");
 
-        LogWrapper::debug("Velocity = %f %f", mVelocity.x, mVelocity.y);
-        LogWrapper::debug("Acceleration = %f %f", mAcceleration.x, mAcceleration.y);
+        Log::debug("Velocity = %f %f", mVelocity.x, mVelocity.y);
+        Log::debug("Acceleration = %f %f", mAcceleration.x, mAcceleration.y);
 
         return true;
     }
@@ -165,14 +169,14 @@ namespace Actors {
             mSize.y = ptrTexture->GetHeight();
         }
 
-        LogWrapper::debug("Final size %f %f", mSize.x, mSize.y);
+        Log::debug("Final size %f %f", mSize.x, mSize.y);
 
         if(!mPositionCenter) return;
 
         mPosition.x -= mSize.x / 2.f;
         mPosition.y -= mSize.y / 2.f;
 
-        LogWrapper::debug("Position center %f %f", mPosition.x, mPosition.y);
+        Log::debug("Position center %f %f", mPosition.x, mPosition.y);
 
     }
 
@@ -184,6 +188,98 @@ namespace Actors {
 
         mVelocity.x += mAcceleration.x * dt;
         mPosition.x += mVelocity.x * dt;
+    }
+
+    bool PhysicsComponent::CheckCollision(PhysicsComponent const & other) {
+        assert(this->mType == PhysicsComponentType::CIRLCE && other.mType == PhysicsComponentType::RECTANGLE);
+
+        glm::vec2 corners [4];
+        corners[0].x = other.mPosition.x;
+        corners[0].y = other.mPosition.y;
+        corners[1].x = corners[0].x + other.mSize.x;
+        corners[1].y = corners[0].y;
+        corners[2].x = corners[1].x;
+        corners[2].y = corners[1].y + other.mSize.y;
+        corners[3].x = corners[0].x;
+        corners[3].y = corners[0].y + other.mSize.y;
+
+        auto edge1 = glm::vec2(corners[1].x - corners[0].x,
+                               corners[1].y - corners[0].y);
+        edge1 = glm::normalize(edge1);
+
+        auto edge3 = glm::vec2(corners[3].x - corners[0].x,
+                               corners[3].y - corners[0].y);
+        edge3 = glm::normalize(edge3);
+
+        float proj = glm::dot(corners[0], edge1);
+        float edge1min = proj;
+        float edge1max = proj;
+
+        proj = glm::dot(corners[1], edge1);
+
+        edge1min = proj < edge1min ? proj : edge1min;
+        edge1max = proj > edge1max ? proj : edge1max;
+
+        proj = glm::dot(corners[0], edge3);
+        auto edge3min = proj;
+        auto edge3max = proj;
+
+        proj = glm::dot(corners[3], edge3);
+
+        edge3min = proj < edge3min ? proj : edge3min;
+        edge3max = proj > edge3max ? proj : edge3max;
+
+        auto circleCenter = glm::vec2(this->mPosition.x + mSize.x / 2.f, this->mPosition.y + mSize.y / 2.f);
+        float radii = mSize.y / 2.f;
+
+        float projCircleCenter1 = glm::dot(circleCenter, edge1);
+        auto min01 = projCircleCenter1 - radii;
+        auto max01 = projCircleCenter1 + radii;
+
+//        Log::debug("min01 %f, edge1max %f ||| max01 %f, edge1min %f", min01, edge1max, max01, edge1min);
+        if(min01 > edge1max || max01 < edge1min)
+            return false;
+
+        float projCircleCenter3 = glm::dot(circleCenter, edge3);
+        auto min03 = projCircleCenter3 - radii;
+        auto max03 = projCircleCenter3 + radii;
+
+//        Log::debug("min03 %f, edge3max %f ||| max03 %f, edge3min %f", min03, edge3max, max03, edge3min);
+        if(min03 > edge3max || max03 < edge3min)
+            return false;
+
+        if(projCircleCenter1 < edge1min && projCircleCenter3 < edge3min)
+            return CollideCornerCircle(corners[0], circleCenter, radii);
+
+        if(projCircleCenter1 > edge1max && projCircleCenter3 < edge3min)
+            return CollideCornerCircle(corners[1], circleCenter, radii);
+
+        if(projCircleCenter1 > edge1max && projCircleCenter3 > edge3max)
+            return CollideCornerCircle(corners[2], circleCenter, radii);
+
+        if(projCircleCenter1 < edge1min && projCircleCenter3 > edge3max)
+            return CollideCornerCircle(corners[3], circleCenter, radii);
+
+        // Circle not in voronoi region so it is colliding with edge of box
+        return true;
+    }
+
+    bool PhysicsComponent::CollideCornerCircle(glm::vec2 const &corner, glm::vec2 const & circleCenter, float radii) {
+        auto diffVecSquared = corner - circleCenter; // Corner - circle
+        diffVecSquared.x *= diffVecSquared.x;
+        diffVecSquared.y *= diffVecSquared.y;
+        // Calculate the sum of the radii, then square it
+        auto RadiiSquared = radii * radii;
+        // If corner and circle are colliding
+        return (diffVecSquared.x + diffVecSquared.y <= RadiiSquared);
+    }
+
+    PhysicsComponentType PhysicsComponent::ParsePhysicsComponentType(std::string const & type) {
+        if(type == "Rectangle") return PhysicsComponentType::RECTANGLE;
+        if(type == "Circle") return PhysicsComponentType::CIRLCE;
+
+        Log::error("WRONG PHYSICS_COMPONENT_TYPE %s", type.c_str());
+        assert(false);
     }
 
 

@@ -4,7 +4,7 @@
 #include <android_native_app_glue.h>
 
 #include "TouchDetector.h"
-#include "GLContextWrapper.h"
+#include "GLState.h"
 
 class Android {
 public:

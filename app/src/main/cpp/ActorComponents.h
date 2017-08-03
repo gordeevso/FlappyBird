@@ -46,7 +46,10 @@ namespace Actors {
         static ComponentId const COMPONENT_ID;
     };
 
-
+    enum class PhysicsComponentType {
+        RECTANGLE,
+        CIRLCE
+    };
 
     class PhysicsComponent : public ActorComponent {
     public:
@@ -57,6 +60,8 @@ namespace Actors {
         virtual bool VInit(XmlElement * pData);
         virtual void VPostInit();
         virtual void VUpdate(double deltaSec);
+
+        bool CheckCollision(PhysicsComponent const &);
 
         void SetPosition(glm::vec2 const & pos) { mPosition = pos; }
         void SetSize(glm::vec2 const & size) { mSize = size; }
@@ -71,6 +76,10 @@ namespace Actors {
         glm::vec2 const & GetAcceleration() const { return mAcceleration; }
 
     private:
+        PhysicsComponentType ParsePhysicsComponentType(std::string const &);
+        bool CollideCornerCircle(glm::vec2 const & corner, glm::vec2 const & circleCentre, float radii);
+
+    private:
         glm::vec2 mPosition;
         glm::vec2 mSize;
         GLfloat   mDegrees;
@@ -78,7 +87,7 @@ namespace Actors {
         glm::vec2 mAcceleration;
         glm::vec2 mForce;
         bool mPositionCenter;
-
+        PhysicsComponentType mType;
         static ComponentId const COMPONENT_ID;
     };
 

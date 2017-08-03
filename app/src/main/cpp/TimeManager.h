@@ -1,13 +1,13 @@
 #pragma once
 
 #include <ctime>
-#include "LogWrapper.h"
+#include "Log.h"
 
 class TimeManager
 {
 public:
     explicit TimeManager();
-    ~TimeManager() {LogWrapper::debug("dtor");};
+    ~TimeManager() {Log::debug("dtor");};
     TimeManager(TimeManager const &) = delete;
     TimeManager & operator=(TimeManager const &) = delete;
 

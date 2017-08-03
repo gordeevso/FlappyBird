@@ -1,7 +1,7 @@
 #pragma once
 
 
-class LogWrapper
+class Log
 {
 public:
     static void error(const char* pMessage, ...);

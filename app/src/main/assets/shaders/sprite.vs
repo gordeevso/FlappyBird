@@ -1,10 +1,8 @@
-#version 300 es
 
 // simple vertex shader for sprite rendering
 // in vec4 - <vec2 position, vec2 texCoords>
-layout (location = 0) in vec4 vertex;
-
-out vec2 TexCoords;
+attribute vec4 vertex;
+varying vec2 TexCoords;
 
 uniform mat4 model;
 uniform mat4 projection;

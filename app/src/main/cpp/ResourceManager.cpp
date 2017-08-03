@@ -8,8 +8,8 @@
 #include <SOIL2.h>
 
 #include "ResourceManager.h"
-#include "LogWrapper.h"
-#include "GLContextWrapper.h"
+#include "Log.h"
+#include "GLState.h"
 #include "Android.h"
 
 TextureMap ResourceManager::mTextures;
@@ -37,8 +37,8 @@ void ResourceManager::LoadShader(std::string const &vs_file_path,
     mShaders[program_name].CreateProgram(std::string{vsSourceRaw.begin(), vsSourceRaw.end()},
                                          std::string{fsSourceRaw.begin(), fsSourceRaw.end()});
 
-    LogWrapper::debug("LOAD SHADER SUCCESS : %s", vs_file_path.c_str());
-    LogWrapper::debug("LOAD SHADER SUCCESS : %s", fs_file_path.c_str());
+    Log::debug("LOAD SHADER SUCCESS : %s", vs_file_path.c_str());
+    Log::debug("LOAD SHADER SUCCESS : %s", fs_file_path.c_str());
 
 }
 
@@ -65,7 +65,7 @@ void ResourceManager::LoadTexture(std::string const &texture_file,
     int32_t width{};
     int32_t height{};
 
-    LogWrapper::info("LOADING TEXTURE %s", texture_file.c_str());
+    Log::info("LOADING TEXTURE %s", texture_file.c_str());
 
     std::vector<uint8_t> textureRaw {};
     Read(texture_file, textureRaw);
@@ -79,7 +79,7 @@ void ResourceManager::LoadTexture(std::string const &texture_file,
 
     mTextures[name]->Generate(width, height, textureRaw);
 
-    LogWrapper::info("LOADED TEXTURE %s SUCCESS", texture_file.c_str());
+    Log::info("LOADED TEXTURE %s SUCCESS", texture_file.c_str());
 }
 
 std::vector<std::string> const & ResourceManager::GetTextureNames() {
@@ -93,7 +93,7 @@ void ResourceManager::Read(std::string path,
     AAsset *asset = AAssetManager_open(assetManager, path.c_str(), AASSET_MODE_UNKNOWN);
 
     if (asset == nullptr) {
-        LogWrapper::debug("Error reading file : asset = null");
+        Log::debug("Error reading file : asset = null");
         throw std::invalid_argument("Error opening file : " + path);
     }
 
@@ -107,14 +107,14 @@ void ResourceManager::Read(std::string path,
     AAsset_close(asset);
 
     if(readCount < 0) {
-        LogWrapper::debug("Error reading file : ");
+        Log::debug("Error reading file : ");
         throw std::runtime_error("Error reading file : " + path);
     }
     if(readCount != sizeBytes) {
-        LogWrapper::debug("Error reading file not fully : ");
+        Log::debug("Error reading file not fully : ");
         throw std::runtime_error("Error reading file not fully : " + path);
     }
 
-    LogWrapper::debug("READ SUCCESS %s", path.c_str());
+    Log::debug("READ SUCCESS %s", path.c_str());
 }
 

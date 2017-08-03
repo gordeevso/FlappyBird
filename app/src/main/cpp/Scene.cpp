@@ -1,22 +1,20 @@
 #include <cmath>
 #include <chrono>
+#include <numeric>
 
 #include "Scene.h"
-#include "GLContextWrapper.h"
+#include "GLState.h"
+#include "Android.h"
 
 Scene::Scene() : mPtrBird {nullptr},
-                 mPtrTopTree {nullptr},
-                 mPtrBottomTree {nullptr},
                  mPtrPBird {nullptr},
-                 mPtrPTop {nullptr},
-                 mPtrPBottom {nullptr},
+                 mVecBarriers {},
                  mPtrActorFactory {new Actors::ActorFactory},
                  mPtrSpriteRenderer {new SpriteRenderer},
                  mTargetTapDistance {},
                  mTargetTapTime {},
                  mCheckInputTap {false},
                  mBirdState {OwlState::TAP},
-                 mColumnState {ColumnState::CALCULATE},
                  mRandGenerator {static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count())}
 {
     tinyxml2::XMLDocument sceneXml;
@@ -24,7 +22,7 @@ Scene::Scene() : mPtrBird {nullptr},
     ResourceManager::Read("xmlSettings/scene.xml", xmlBuffer);
     auto result = sceneXml.Parse(std::string(xmlBuffer.begin(), xmlBuffer.end()).c_str());
 
-    LogWrapper::debug("LOAD Settings xmlSettings/scene.xml");
+    Log::debug("LOAD Settings xmlSettings/scene.xml");
     if (result != tinyxml2::XMLError::XML_SUCCESS) {
         assert(result == tinyxml2::XMLError::XML_SUCCESS);
     }
@@ -36,26 +34,38 @@ Scene::Scene() : mPtrBird {nullptr},
     mTargetColumnLeftRightDistance = sceneXmlRoot->FloatAttribute("TargetColumnLeftRightDistance");
     mTargetColumnMinBorderDistance = sceneXmlRoot->FloatAttribute("TargetColumnMinBorderDistance");
 
+    assert(static_cast<float>(GLState::GetInstance().GetScreenHeight()) -
+           2.f * mTargetColumnMinBorderDistance -
+           mTargetColumnTopDownDistance > 0.f);
+
     mPtrBird = mPtrActorFactory->CreateActor("xmlSettings/owl.xml");
     auto ptrWeakPhysicsComponentBird = mPtrBird->GetComponent<Actors::PhysicsComponent>("PhysicsComponent");
     mPtrPBird = Actors::MakeStrongPtr(ptrWeakPhysicsComponentBird);
 
-    mPtrTopTree = mPtrActorFactory->CreateActor("xmlSettings/topColumn.xml");
-    mPtrBottomTree = mPtrActorFactory->CreateActor("xmlSettings/bottomColumn.xml");
-    auto ptrWeakPhysicsComponentTop = mPtrTopTree->GetComponent<Actors::PhysicsComponent>("PhysicsComponent");
-    mPtrPTop = Actors::MakeStrongPtr(ptrWeakPhysicsComponentTop);
-    auto ptrWeakPhysicsComponentBottom = mPtrBottomTree->GetComponent<Actors::PhysicsComponent>("PhysicsComponent");
-    mPtrPBottom = Actors::MakeStrongPtr(ptrWeakPhysicsComponentBottom);
+    int32_t barrierCount = CalculateBarriersCount();
+    assert(barrierCount > 0);
+    mVecBarriers.resize(static_cast<size_t>(barrierCount));
+
+    for(auto & barrier : mVecBarriers) {
+        barrier.mPtrATopColumn = mPtrActorFactory->CreateActor("xmlSettings/topColumn.xml");
+        auto ptrWeakPhysicsComponentTop = barrier.mPtrATopColumn->GetComponent<Actors::PhysicsComponent>("PhysicsComponent");
+        barrier.mPtrPTopColumn = Actors::MakeStrongPtr(ptrWeakPhysicsComponentTop);
+
+        barrier.mPtrABottomColumn = mPtrActorFactory->CreateActor("xmlSettings/bottomColumn.xml");
+        auto ptrWeakPhysicsComponentBottom = barrier.mPtrABottomColumn->GetComponent<Actors::PhysicsComponent>("PhysicsComponent");
+        barrier.mPtrPBottomColumn = Actors::MakeStrongPtr(ptrWeakPhysicsComponentBottom);
+
+        barrier.mBarrierState = BarrierState::CALCULATE;
+    }
+
 }
 
 
-void Scene::Update(double deltaSec) {
-    auto dt = static_cast<float>(deltaSec);
-
-    if(mCheckInputTap) mBirdState = OwlState::TAP;
+bool Scene::Update(double deltaSec) {
 
     switch(mBirdState) {
         case OwlState::FALL: {
+            if(mCheckInputTap) mBirdState = OwlState::TAP;
             break;
         }
 
@@ -68,77 +78,130 @@ void Scene::Update(double deltaSec) {
         }
     }
 
-    switch (mColumnState) {
-        case ColumnState::WAIT : {
-            LogWrapper::debug("WAIT");
-            mColumnState = ColumnState::SHOW;
-            break;
-        }
+    for(auto & barrier: mVecBarriers) {
+        switch (barrier.mBarrierState) {
+            case BarrierState::WAIT : {
+                if(ShowBarrier(barrier.mPtrPTopColumn->GetPosition().x)) barrier.mBarrierState = BarrierState::SHOW;
+                break;
+            }
 
-        case ColumnState::CALCULATE : {
-            LogWrapper::debug("CALCULATE");
-            CalculateColumnPos();
-            mColumnState = ColumnState::WAIT;
-            break;
-        }
+            case BarrierState::CALCULATE : {
+                CalculateColumnPos(barrier.mPtrPTopColumn, barrier.mPtrPBottomColumn);
+                Log::debug("Barr pos %f %f", barrier.mPtrPTopColumn->GetPosition().x, barrier.mPtrPTopColumn->GetPosition().y);
+                barrier.mBarrierState = BarrierState::WAIT;
+                break;
+            }
 
-        case ColumnState::SHOW : {
-            LogWrapper::debug("SHOW");
-            mPtrTopTree->Update(deltaSec);
-            mPtrBottomTree->Update(deltaSec);
-            if(!IsSeen()) mColumnState = ColumnState::CALCULATE;
-            break;
+            case BarrierState::SHOW : {
+                if(mPtrPBird->CheckCollision(*barrier.mPtrPTopColumn))
+                    return false;
+
+                if(mPtrPBird->CheckCollision(*barrier.mPtrPBottomColumn))
+                    return false;
+
+                barrier.mPtrATopColumn->Update(deltaSec);
+                barrier.mPtrABottomColumn->Update(deltaSec);
+                if (!IsSeen(barrier.mPtrPTopColumn)) barrier.mBarrierState = BarrierState::CALCULATE;
+                break;
+            }
         }
     }
-//    LogWrapper::debug("Bird position %f , %f", mPtrPBird->GetPosition().x, mPtrPBird->GetPosition().y);
+
+//    Log::debug("Bird position %f , %f", mPtrPBird->GetPosition().x, mPtrPBird->GetPosition().y);
+    if(CheckBirdOverlapScene())
+        return false;
+
     mPtrBird->Update(deltaSec);
 
+    return true;
 }
 
 void Scene::Draw() {
     mPtrSpriteRenderer->Draw(mPtrBird);
 
-    switch (mColumnState) {
-        case ColumnState::SHOW : {
-            mPtrSpriteRenderer->Draw(mPtrTopTree);
-            mPtrSpriteRenderer->Draw(mPtrBottomTree);
-            break;
-        }
+    for(auto & barrier: mVecBarriers) {
+        switch (barrier.mBarrierState) {
+            case BarrierState::SHOW : {
+                mPtrSpriteRenderer->Draw(barrier.mPtrATopColumn);
+                mPtrSpriteRenderer->Draw(barrier.mPtrABottomColumn);
+                break;
+            }
 
-        default:
-            break;
+            default:
+                break;
+        }
     }
 
 }
 
 void Scene::CalculateTapVelocity(glm::vec2 & velocity) {
     velocity.y = -sqrtf(2.f* mPtrPBird->GetAcceleration().y * mTargetTapDistance);
-    LogWrapper::debug("Time %f", velocity.y / mPtrPBird->GetAcceleration().y);
+//    Log::debug("Time %f", velocity.y / mPtrPBird->GetAcceleration().y);
 }
 
-void Scene::CalculateColumnPos() {
-    auto TSize = mPtrPTop->GetSize();
-    auto BSize = mPtrPBottom->GetSize();
+bool Scene::IsSeen(std::shared_ptr<Actors::PhysicsComponent> ptrTop) {
+    return ptrTop->GetPosition().x > -ptrTop->GetSize().x;
+}
+
+int32_t Scene::CalculateBarriersCount() {
+    return (GLState::GetInstance().GetScreenWidth() / static_cast<int32_t>(mTargetColumnLeftRightDistance)) * 2 + 3;
+}
+
+void Scene::CalculateColumnPos(std::shared_ptr<Actors::PhysicsComponent> ptrTop,
+                               std::shared_ptr<Actors::PhysicsComponent> ptrBottom) {
+    auto TSize = ptrTop->GetSize();
+    auto BSize = ptrBottom->GetSize();
 
     glm::vec2 TPos {};
     glm::vec2 BPos {};
+    auto rand = mRandGenerator();
 
-    float posTopColBLy = mRandGenerator() %
-                         static_cast<uint32_t>(GLContextWrapper::GetInstance().GetScreenHeight() -
+
+
+    float posTopColBLy = rand %
+                         static_cast<uint32_t>(static_cast<float>(GLState::GetInstance().GetScreenHeight()) -
                                                2.f * mTargetColumnMinBorderDistance -
                                                mTargetColumnTopDownDistance) +
-                                               mTargetColumnMinBorderDistance;
+                         mTargetColumnMinBorderDistance;
 
-    TPos.x = GLContextWrapper::GetInstance().GetScreenWidth();
+
+
+    TPos.x = GLState::GetInstance().GetScreenWidth();
     TPos.y = posTopColBLy - TSize.y;
-    BPos.x = GLContextWrapper::GetInstance().GetScreenWidth();
+    BPos.x = GLState::GetInstance().GetScreenWidth();
     BPos.y = posTopColBLy + mTargetColumnTopDownDistance;
 
-    mPtrPTop->SetPosition(TPos);
-    mPtrPBottom->SetPosition(BPos);
+    ptrTop->SetPosition(TPos);
+    ptrBottom->SetPosition(BPos);
 }
 
-bool Scene::IsSeen() {
-    return mPtrPTop->GetPosition().x > -mPtrPTop->GetSize().x;
+bool Scene::ShowBarrier(float posX) {
+    float minDist = std::numeric_limits<float>::max();
+
+    for(auto & barrier: mVecBarriers) {
+        if(barrier.mBarrierState == BarrierState::SHOW) {
+            minDist = std::min(minDist, posX - barrier.mPtrPTopColumn->GetPosition().x);
+        }
+    }
+
+    return minDist > mTargetColumnLeftRightDistance;
 }
 
+bool Scene::CheckBirdOverlapScene() {
+    return mPtrPBird->GetPosition().y + mPtrPBird->GetSize().y > GLState::GetInstance().GetScreenHeight();
+}
+
+
+
+
+PauseScene::PauseScene() {
+
+}
+
+void PauseScene::Update(double deltaSec) {
+
+}
+
+void PauseScene::Draw() {
+
+}
