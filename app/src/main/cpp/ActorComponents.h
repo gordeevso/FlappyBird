@@ -70,6 +70,7 @@ namespace Actors {
         void SetAcceleration(glm::vec2 const & acceleration) { mAcceleration = acceleration; }
 
         glm::vec2 const & GetPosition() const { return mPosition; }
+        glm::vec2 const & GetStartPosition() const { return mStartPosition; }
         glm::vec2 const & GetSize() const { return mSize; }
         GLfloat GetRotation() const { return mDegrees; }
         glm::vec2 const & GetVelocity() const { return mVelocity; }
@@ -81,6 +82,7 @@ namespace Actors {
 
     private:
         glm::vec2 mPosition;
+        glm::vec2 mStartPosition;
         glm::vec2 mSize;
         GLfloat   mDegrees;
         glm::vec2 mVelocity;

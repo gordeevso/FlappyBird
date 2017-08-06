@@ -1,0 +1,21 @@
+<Actor
+    Type="BottomColumn">
+
+	<RenderComponent
+        Texture="column">
+	</RenderComponent>
+
+	<PhysicsComponent
+		Type="Rectangle"
+		ScaleX="1" ScaleMaxX="1"
+		ScaleY="1" ScaleMaxY="1"
+		ScaleSizeX="0" ScaleMaxSizeX="0"
+		ScaleSizeY="4" ScaleMaxSizeY="5"
+		VelocityX="-200.0"
+		VelocityY="0.0"
+		AccelerationX="0.0"
+		AccelerationY="0.0"
+		PositionCenter="false">
+	</PhysicsComponent>
+
+</Actor>

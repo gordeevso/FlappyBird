@@ -107,7 +107,7 @@ namespace Actors {
 
         GLfloat posX = scaleX == 0 || scaleMaxX == 0 ? 0.f : static_cast<GLfloat>(GLState::GetInstance().GetScreenWidth()) / scaleMaxX * scaleX;
         GLfloat posY = scaleY == 0 || scaleMaxX == 0 ? 0.f : static_cast<GLfloat>(GLState::GetInstance().GetScreenHeight()) / scaleMaxY * scaleY;
-        mPosition = {posX, posY};
+        mPosition = mStartPosition = {posX, posY};
         Log::debug("Position: x = %f, y = %f", posX, posY);
 
         int32_t scaleSizeX = pData->IntAttribute("ScaleSizeX");

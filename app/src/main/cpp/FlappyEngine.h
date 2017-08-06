@@ -5,7 +5,8 @@
 #include "TimeManager.h"
 #include "SpriteRenderer.h"
 #include "ActorFactory.h"
-#include "Scene.h"
+#include "SceneGame.h"
+#include "TextRenderer.h"
 
 class FlappyEngine
 {
@@ -46,18 +47,32 @@ public:
     void onGainFocus();
     void onLostFocus();
 
+    void DrawFPSWithTargetFrequency(float deltaSec, float secBetweenUpdate);
+    void DrawFPS(std::string fps);
 private:
 
     enum class GameState {
+        START,
         ACTIVE,
-        PAUSE
+        PAUSE,
+        FINISH
     };
 
 private:
 
     std::unique_ptr<TimeManager> mPtrTimeManager;
-    std::unique_ptr<Scene> mPtrGameScene;
-    std::unique_ptr<PauseScene> mPtrPauseScene;
+
+    std::unique_ptr<SceneGame> mPtrGameScene;
+    std::unique_ptr<ScenePause> mPtrPauseScene;
+    std::unique_ptr<ScenePause> mPtrStartScene;
+    std::unique_ptr<ScenePause> mPtrFinishScene;
+
+    std::unique_ptr<TextRenderer> mPtrTextDefaultRenderer;
+    std::unique_ptr<TextRenderer> mPtrTextPauseRenderer;
+    std::unique_ptr<TextRenderer> mPtrTextDigitRenderer;
+
     bool mInitializedResource;
     GameState mGameState;
+    float mTimeAccumulator;
+    float mCurrentFPS;
 };

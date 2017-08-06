@@ -26,20 +26,22 @@ Shader & ResourceManager::GetShader(std::string const &name) {
 void ResourceManager::LoadShader(std::string const &vs_file_path,
                                  std::string const &fs_file_path,
                                  std::string const &program_name) {
+    auto result = mShaders.find(program_name);
+    if(result == mShaders.end()) {
 
-    std::vector<uint8_t> vsSourceRaw {};
-    Read(vs_file_path, vsSourceRaw);
+        std::vector<uint8_t> vsSourceRaw{};
+        Read(vs_file_path, vsSourceRaw);
 
-    std::vector<uint8_t> fsSourceRaw {};
-    Read(fs_file_path, fsSourceRaw);
+        std::vector<uint8_t> fsSourceRaw{};
+        Read(fs_file_path, fsSourceRaw);
 
-    mShaders.insert(std::make_pair(program_name, Shader{}));
-    mShaders[program_name].CreateProgram(std::string{vsSourceRaw.begin(), vsSourceRaw.end()},
-                                         std::string{fsSourceRaw.begin(), fsSourceRaw.end()});
+        mShaders.insert(std::make_pair(program_name, Shader{}));
+        mShaders[program_name].CreateProgram(std::string{vsSourceRaw.begin(), vsSourceRaw.end()},
+                                             std::string{fsSourceRaw.begin(), fsSourceRaw.end()});
 
-    Log::debug("LOAD SHADER SUCCESS : %s", vs_file_path.c_str());
-    Log::debug("LOAD SHADER SUCCESS : %s", fs_file_path.c_str());
-
+        Log::debug("LOAD SHADER SUCCESS : %s", vs_file_path.c_str());
+        Log::debug("LOAD SHADER SUCCESS : %s", fs_file_path.c_str());
+    }
 }
 
 

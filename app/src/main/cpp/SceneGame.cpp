@@ -2,11 +2,11 @@
 #include <chrono>
 #include <numeric>
 
-#include "Scene.h"
+#include "SceneGame.h"
 #include "GLState.h"
 #include "Android.h"
 
-Scene::Scene() : mPtrBird {nullptr},
+SceneGame::SceneGame() : mPtrBird {nullptr},
                  mPtrPBird {nullptr},
                  mVecBarriers {},
                  mPtrActorFactory {new Actors::ActorFactory},
@@ -14,6 +14,7 @@ Scene::Scene() : mPtrBird {nullptr},
                  mTargetTapDistance {},
                  mTargetTapTime {},
                  mCheckInputTap {false},
+                 mCurrentScore {0},
                  mBirdState {OwlState::TAP},
                  mRandGenerator {static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count())}
 {
@@ -61,7 +62,20 @@ Scene::Scene() : mPtrBird {nullptr},
 }
 
 
-bool Scene::Update(double deltaSec) {
+void SceneGame::RestartGame() {
+    for(auto & barrier : mVecBarriers) {
+        barrier.mBarrierState = BarrierState::CALCULATE;
+    }
+
+    mPtrBird = mPtrActorFactory->CreateActor("xmlSettings/owl.xml");
+    auto ptrWeakPhysicsComponentBird = mPtrBird->GetComponent<Actors::PhysicsComponent>("PhysicsComponent");
+    mPtrPBird = Actors::MakeStrongPtr(ptrWeakPhysicsComponentBird);
+
+
+}
+
+
+bool SceneGame::Update(double deltaSec) {
 
     switch(mBirdState) {
         case OwlState::FALL: {
@@ -116,7 +130,7 @@ bool Scene::Update(double deltaSec) {
     return true;
 }
 
-void Scene::Draw() {
+void SceneGame::Draw() {
     mPtrSpriteRenderer->Draw(mPtrBird);
 
     for(auto & barrier: mVecBarriers) {
@@ -134,20 +148,20 @@ void Scene::Draw() {
 
 }
 
-void Scene::CalculateTapVelocity(glm::vec2 & velocity) {
+void SceneGame::CalculateTapVelocity(glm::vec2 & velocity) {
     velocity.y = -sqrtf(2.f* mPtrPBird->GetAcceleration().y * mTargetTapDistance);
 //    Log::debug("Time %f", velocity.y / mPtrPBird->GetAcceleration().y);
 }
 
-bool Scene::IsSeen(std::shared_ptr<Actors::PhysicsComponent> ptrTop) {
+bool SceneGame::IsSeen(std::shared_ptr<Actors::PhysicsComponent> ptrTop) {
     return ptrTop->GetPosition().x > -ptrTop->GetSize().x;
 }
 
-int32_t Scene::CalculateBarriersCount() {
+int32_t SceneGame::CalculateBarriersCount() {
     return (GLState::GetInstance().GetScreenWidth() / static_cast<int32_t>(mTargetColumnLeftRightDistance)) * 2 + 3;
 }
 
-void Scene::CalculateColumnPos(std::shared_ptr<Actors::PhysicsComponent> ptrTop,
+void SceneGame::CalculateColumnPos(std::shared_ptr<Actors::PhysicsComponent> ptrTop,
                                std::shared_ptr<Actors::PhysicsComponent> ptrBottom) {
     auto TSize = ptrTop->GetSize();
     auto BSize = ptrBottom->GetSize();
@@ -175,7 +189,7 @@ void Scene::CalculateColumnPos(std::shared_ptr<Actors::PhysicsComponent> ptrTop,
     ptrBottom->SetPosition(BPos);
 }
 
-bool Scene::ShowBarrier(float posX) {
+bool SceneGame::ShowBarrier(float posX) {
     float minDist = std::numeric_limits<float>::max();
 
     for(auto & barrier: mVecBarriers) {
@@ -187,21 +201,30 @@ bool Scene::ShowBarrier(float posX) {
     return minDist > mTargetColumnLeftRightDistance;
 }
 
-bool Scene::CheckBirdOverlapScene() {
+bool SceneGame::CheckBirdOverlapScene() {
     return mPtrPBird->GetPosition().y + mPtrPBird->GetSize().y > GLState::GetInstance().GetScreenHeight();
 }
 
 
 
 
-PauseScene::PauseScene() {
+
+
+ScenePause::ScenePause(const std::string &message) : mMessage {message} {
 
 }
 
-void PauseScene::Update(double deltaSec) {
+void ScenePause::Update(double deltaSec) {
 
 }
 
-void PauseScene::Draw() {
+void ScenePause::Draw(std::unique_ptr<TextRenderer> const & ptrTextRenderer) {
 
+    ptrTextRenderer->RenderText(mMessage,
+                                GLState::GetInstance().GetScreenWidth() / 2.f - (ptrTextRenderer->GetCharMap().find('a')->second.mSize.x * mMessage.size()) / 2.f,
+                                GLState::GetInstance().GetScreenHeight() / 2.f - ptrTextRenderer->GetCharMap().find('a')->second.mSize.y,
+                                1.0f,
+                                glm::vec3(0.2f, 0.2f, 0.8f));
 }
+
+

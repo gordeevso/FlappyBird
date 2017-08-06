@@ -1,6 +1,6 @@
 
 // simple vertex shader for sprite rendering
-// in vec4 - <vec2 position, vec2 texCoords>
+// var vec4 - <vec2 position, vec2 texCoords>
 attribute vec4 vertex;
 varying vec2 TexCoords;
 

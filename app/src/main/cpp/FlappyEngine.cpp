@@ -4,11 +4,15 @@
 #include "Log.h"
 #include "ActorFactory.h"
 
+#include "StringUtils.h"
+
 FlappyEngine::FlappyEngine() : mPtrTimeManager {new TimeManager},
                                mPtrGameScene {nullptr},
                                mPtrPauseScene {nullptr},
                                mInitializedResource {false},
-                               mGameState {GameState::PAUSE}
+                               mGameState {GameState::START},
+                               mTimeAccumulator {0.f},
+                               mCurrentFPS {0.f}
 {}
 
 void FlappyEngine::Init() {
@@ -20,8 +24,14 @@ void FlappyEngine::Init() {
         ResourceManager::LoadTexture("textures/bird4.png", GL_TRUE, "bird4");
         ResourceManager::LoadTexture("textures/column.png", GL_TRUE, "column");
 
-        mPtrGameScene.reset(new Scene);
-        mPtrPauseScene.reset(new PauseScene);
+        mPtrGameScene.reset(new SceneGame);
+        mPtrPauseScene.reset(new ScenePause{"TAP TO CONTINUE"});
+        mPtrStartScene.reset(new ScenePause{"TAP TO START"});
+        mPtrFinishScene.reset(new ScenePause{"TAP TO TRY AGAIN"});
+
+        mPtrTextDefaultRenderer.reset(new TextRenderer{"fonts/slkscr.ttf", 40});
+        mPtrTextPauseRenderer.reset(new TextRenderer{"fonts/luckiestguy.ttf", 40});
+        mPtrTextDigitRenderer.reset(new TextRenderer{"fonts/slkscr.ttf", 40});
 
         mInitializedResource = true;
     }
@@ -48,21 +58,51 @@ bool FlappyEngine::onStep() {
 
 //    Log::debug("FPS = %f", mPtrTimeManager->FramesPerSecond());
 
-    glClearColor(0.f, 0.4f, 0.f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     switch (mGameState) {
+        case GameState::START : {
+            mPtrStartScene->Draw(mPtrTextPauseRenderer);
+
+            if(Android::GetInstance().UpdateInput()) {
+                mGameState = GameState::ACTIVE;
+            }
+
+            break;
+        }
+
         case GameState::ACTIVE: {
+            glClearColor(0.f, 0.4f, 0.f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+
             mPtrGameScene->InputTap(Android::GetInstance().UpdateInput());
             if (!mPtrGameScene->Update(mPtrTimeManager->FrameTime()))
-                mGameState = GameState::PAUSE;
+                mGameState = GameState::FINISH;
             mPtrGameScene->Draw();
+
+            DrawFPSWithTargetFrequency(static_cast<float>(mPtrTimeManager->FrameTime()), 0.2f);
+
             break;
         }
 
         case GameState::PAUSE: {
-            if(Android::GetInstance().UpdateInput())
+            if(Android::GetInstance().UpdateInput()) {
+                mPtrGameScene->RestartGame();
                 mGameState = GameState::ACTIVE;
+            }
+
+            mPtrPauseScene->Draw(mPtrTextPauseRenderer);
+
+            break;
+        }
+
+        case GameState::FINISH : {
+            if(Android::GetInstance().UpdateInput()) {
+                mPtrGameScene->RestartGame();
+                mGameState = GameState::ACTIVE;
+            }
+
+            mPtrFinishScene->Draw(mPtrTextPauseRenderer);
+
             break;
         }
     }
@@ -70,6 +110,24 @@ bool FlappyEngine::onStep() {
 
     GLState::GetInstance().Swap();
     return true;
+}
+
+void FlappyEngine::DrawFPSWithTargetFrequency(float deltaSec, float secBetweenUpdate) {
+    mTimeAccumulator += deltaSec;
+    if(mTimeAccumulator >= secBetweenUpdate ) {
+        mCurrentFPS = static_cast<int32_t>(mPtrTimeManager->FramesPerSecond());
+        mTimeAccumulator = 0.f;
+    }
+
+    DrawFPS(to_string(mCurrentFPS));
+}
+
+void FlappyEngine::DrawFPS(std::string fps) {
+    mPtrTextDefaultRenderer->RenderText(fps,
+                                 GLState::GetInstance().GetScreenWidth() - mPtrTextDefaultRenderer->GetCharMap().find('a')->second.mSize.x * fps.size() - 20.f,
+                                 GLState::GetInstance().GetScreenHeight() - mPtrTextDefaultRenderer->GetCharMap().find('a')->second.mSize.y - 20.f,
+                                 1.0f,
+                                 glm::vec3(0.2f, 0.2f, 0.8f));
 }
 
 void FlappyEngine::onStart() {
@@ -122,6 +180,8 @@ void FlappyEngine::onGainFocus() {
 void FlappyEngine::onLostFocus() {
 
 }
+
+
 
 
 

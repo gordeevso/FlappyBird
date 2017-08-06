@@ -1,21 +1,24 @@
 #pragma once
 
 #include <random>
-#include <deque>
 
 #include "Actor.h"
 #include "ActorFactory.h"
 #include "SpriteRenderer.h"
+#include "TextRenderer.h"
 
-class Scene {
+class SceneGame {
 
 public:
-    Scene();
-    ~Scene() = default;
+    SceneGame();
+    ~SceneGame() = default;
     bool Update(double deltaSec);
     void Draw();
 
     void InputTap(bool isTapped) { mCheckInputTap = isTapped; }
+    void RestartGame();
+
+    uint64_t GetCurrentScore() { return mCurrentScore; }
 
 private:
     void CalculateTapVelocity(glm::vec2 & velocity);
@@ -68,27 +71,24 @@ private:
     float mTargetColumnTopDownDistance;
     float mTargetColumnLeftRightDistance;
     float mTargetColumnMinBorderDistance;
-
+    uint64_t mCurrentScore;
     OwlState mBirdState;
 
     std::minstd_rand0 mRandGenerator;
 };
 
 
-class PauseScene {
+class ScenePause {
 
 public:
-    PauseScene();
-    ~PauseScene() = default;
+    ScenePause(std::string const & message = "");
+    ~ScenePause() = default;
     void Update(double deltaSec);
-    void Draw();
+    void Draw(std::unique_ptr<TextRenderer> const & ptrTextRenderer);
 
     void InputTap(bool isTapped) { mCheckInputTap = isTapped; }
 
-
-
-
 private:
     bool mCheckInputTap;
-
+    std::string mMessage;
 };
