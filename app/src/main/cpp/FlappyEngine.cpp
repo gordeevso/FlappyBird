@@ -1,21 +1,30 @@
 #include "FlappyEngine.h"
-#include "ResourceManager.h"
 #include "Android.h"
 #include "Log.h"
 #include "ActorFactory.h"
+#include "EventManager.h"
+#include "Events.h"
+#include "Utilities.h"
+#include "ResourceManager.h"
 
-#include "StringUtils.h"
+GameState FlappyEngine::sGameState = GameState::START;
 
-FlappyEngine::FlappyEngine() : mPtrTimeManager {new TimeManager},
-                               mPtrGameScene {nullptr},
+FlappyEngine::FlappyEngine() : mPtrGameScene {nullptr},
                                mPtrPauseScene {nullptr},
                                mInitializedResource {false},
-                               mGameState {GameState::START},
                                mTimeAccumulator {0.f},
                                mCurrentFPS {0.f}
-{}
+{
+    Events::EventListenerDelegate delegate;
+    delegate = std::bind(&FlappyEngine::LoadResourcesDelegate, this, std::placeholders::_1);;
+    Events::EventManager::Get().AddListener(delegate, Events::EventLoadResources::sEventType);
+    delegate = std::bind(&FlappyEngine::UnloadResourcesDelegate, this, std::placeholders::_1);
+    Events::EventManager::Get().AddListener(delegate, Events::EventUnloadResources::sEventType);
+    delegate = std::bind(&FlappyEngine::ChangeGameStateDelegate, this, std::placeholders::_1);
+    Events::EventManager::Get().AddListener(delegate, Events::EventChangeGameState::sEventType);
+}
 
-void FlappyEngine::Init() {
+void FlappyEngine::LoadResources() {
 
     if(!mInitializedResource) {
         ResourceManager::LoadTexture("textures/bird1.png", GL_TRUE, "bird1");
@@ -24,23 +33,49 @@ void FlappyEngine::Init() {
         ResourceManager::LoadTexture("textures/bird4.png", GL_TRUE, "bird4");
         ResourceManager::LoadTexture("textures/column.png", GL_TRUE, "column");
 
+        ResourceManager::LoadUiStrings("xmlSettings/ui.xml");
+
         mPtrGameScene.reset(new SceneGame);
         mPtrPauseScene.reset(new ScenePause{"TAP TO CONTINUE"});
         mPtrStartScene.reset(new ScenePause{"TAP TO START"});
         mPtrFinishScene.reset(new ScenePause{"TAP TO TRY AGAIN"});
 
-        mPtrTextDefaultRenderer.reset(new TextRenderer{"fonts/slkscr.ttf", 40});
-        mPtrTextPauseRenderer.reset(new TextRenderer{"fonts/luckiestguy.ttf", 40});
-        mPtrTextDigitRenderer.reset(new TextRenderer{"fonts/slkscr.ttf", 40});
+        mPtrUi.reset(new Ui);
+        mPtrUi->LoadResources("xmlSettings/ui.xml");
 
         mInitializedResource = true;
     }
-
 }
 
 
+void FlappyEngine::UnloadResources() {
+
+    if(mInitializedResource) {
+        ResourceManager::Free();
+
+        mPtrGameScene.reset(nullptr);
+        mPtrPauseScene.reset(nullptr);
+        mPtrStartScene.reset(nullptr);
+        mPtrFinishScene.reset(nullptr);
+
+        mPtrUi.reset(nullptr);
+
+        mInitializedResource = false;
+    }
+}
+
+FlappyEngine::~FlappyEngine() {
+    Events::EventListenerDelegate delegate;
+    delegate = std::bind(&FlappyEngine::LoadResourcesDelegate, this, std::placeholders::_1);
+    Events::EventManager::Get().RemoveListener(delegate, Events::EventLoadResources::sEventType);
+    delegate = std::bind(&FlappyEngine::UnloadResourcesDelegate, this, std::placeholders::_1);
+    Events::EventManager::Get().RemoveListener(delegate, Events::EventUnloadResources::sEventType);
+    delegate = std::bind(&FlappyEngine::ChangeGameStateDelegate, this, std::placeholders::_1);
+    Events::EventManager::Get().RemoveListener(delegate, Events::EventChangeGameState::sEventType);
+}
+
 void FlappyEngine::Run() {
-    mPtrTimeManager->UpdateMainLoop();
+    TimeManager::GetInstance().UpdateMainLoop();
     Android::GetInstance().Run();
 }
 
@@ -54,19 +89,13 @@ void FlappyEngine::onDeactivate() {
 }
 
 bool FlappyEngine::onStep() {
-    mPtrTimeManager->UpdateMainLoop();
+    TimeManager::GetInstance().UpdateMainLoop();
 
-//    Log::debug("FPS = %f", mPtrTimeManager->FramesPerSecond());
-
-
-    switch (mGameState) {
+    switch (sGameState) {
         case GameState::START : {
-            mPtrStartScene->Draw(mPtrTextPauseRenderer);
-
             if(Android::GetInstance().UpdateInput()) {
-                mGameState = GameState::ACTIVE;
+                sGameState = GameState::ACTIVE;
             }
-
             break;
         }
 
@@ -75,38 +104,30 @@ bool FlappyEngine::onStep() {
             glClear(GL_COLOR_BUFFER_BIT);
 
             mPtrGameScene->InputTap(Android::GetInstance().UpdateInput());
-            if (!mPtrGameScene->Update(mPtrTimeManager->FrameTime()))
-                mGameState = GameState::FINISH;
+            mPtrGameScene->Update(TimeManager::GetInstance().FrameTime());
             mPtrGameScene->Draw();
 
-            DrawFPSWithTargetFrequency(static_cast<float>(mPtrTimeManager->FrameTime()), 0.2f);
-
+//            DrawFPSWithTargetFrequency(static_cast<float>(TimeManager::GetInstance().FrameTime()), 0.2f);
             break;
         }
 
         case GameState::PAUSE: {
             if(Android::GetInstance().UpdateInput()) {
-                mPtrGameScene->RestartGame();
-                mGameState = GameState::ACTIVE;
+                sGameState = GameState::ACTIVE;
             }
-
-            mPtrPauseScene->Draw(mPtrTextPauseRenderer);
-
             break;
         }
 
         case GameState::FINISH : {
             if(Android::GetInstance().UpdateInput()) {
                 mPtrGameScene->RestartGame();
-                mGameState = GameState::ACTIVE;
+                sGameState = GameState::ACTIVE;
             }
-
-            mPtrFinishScene->Draw(mPtrTextPauseRenderer);
-
             break;
         }
     }
 
+    mPtrUi->Draw();
 
     GLState::GetInstance().Swap();
     return true;
@@ -115,7 +136,7 @@ bool FlappyEngine::onStep() {
 void FlappyEngine::DrawFPSWithTargetFrequency(float deltaSec, float secBetweenUpdate) {
     mTimeAccumulator += deltaSec;
     if(mTimeAccumulator >= secBetweenUpdate ) {
-        mCurrentFPS = static_cast<int32_t>(mPtrTimeManager->FramesPerSecond());
+        mCurrentFPS = static_cast<int32_t>(TimeManager::GetInstance().FramesPerSecond());
         mTimeAccumulator = 0.f;
     }
 
@@ -123,31 +144,21 @@ void FlappyEngine::DrawFPSWithTargetFrequency(float deltaSec, float secBetweenUp
 }
 
 void FlappyEngine::DrawFPS(std::string fps) {
-    mPtrTextDefaultRenderer->RenderText(fps,
-                                 GLState::GetInstance().GetScreenWidth() - mPtrTextDefaultRenderer->GetCharMap().find('a')->second.mSize.x * fps.size() - 20.f,
-                                 GLState::GetInstance().GetScreenHeight() - mPtrTextDefaultRenderer->GetCharMap().find('a')->second.mSize.y - 20.f,
-                                 1.0f,
-                                 glm::vec3(0.2f, 0.2f, 0.8f));
+//    mPtrTextDefaultRenderer->RenderText(fps,
+//                                        {20.f,20.f},
+//                                        {40.f,40.f},
+//                                 glm::vec3(0.2f, 0.2f, 0.8f));
 }
 
 void FlappyEngine::onStart() {
-
 }
-
 void FlappyEngine::onResume() {
-
 }
-
 void FlappyEngine::onPause() {
-
 }
-
 void FlappyEngine::onStop() {
-
 }
-
 void FlappyEngine::onDestroy() {
-
 }
 
 void FlappyEngine::onSaveInstanceState(void **pData, size_t *pSize) {
@@ -155,31 +166,36 @@ void FlappyEngine::onSaveInstanceState(void **pData, size_t *pSize) {
 }
 
 void FlappyEngine::onConfigurationChanged() {
-
 }
-
 void FlappyEngine::onLowMemory() {
-
 }
-
 void FlappyEngine::onCreateWindow() {
-
-
-
 }
-
 void FlappyEngine::onDestroyWindow() {
     Log::debug("FlappyEngine::onDestroyWindow()");
-//    mPtrGLContext->Invalidate();
 }
-
 void FlappyEngine::onGainFocus() {
-
 }
-
 void FlappyEngine::onLostFocus() {
-
 }
+
+
+
+void FlappyEngine::LoadResourcesDelegate(Events::IEventDataPtr ptrEvent) {
+    LoadResources();
+}
+
+void FlappyEngine::UnloadResourcesDelegate(Events::IEventDataPtr ptrEvent) {
+    UnloadResources();
+}
+
+void FlappyEngine::ChangeGameStateDelegate(Events::IEventDataPtr ptrEvent) {
+    std::shared_ptr<Events::EventChangeGameState> ptrCastedEvent = std::static_pointer_cast<Events::EventChangeGameState>(ptrEvent);
+    sGameState = ptrCastedEvent->GetNextGameState();
+}
+
+
+
 
 
 

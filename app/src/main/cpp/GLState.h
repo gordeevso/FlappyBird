@@ -18,8 +18,6 @@ private:
 public:
     ~GLState();
 
-
-
     bool Init();
     EGLint Swap();
     bool Invalidate();

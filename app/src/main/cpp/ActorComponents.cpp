@@ -1,13 +1,18 @@
+#include <glm/gtx/projection.hpp>
+#include <list>
 
 #include "ActorComponents.h"
 #include "GLState.h"
-#include <glm/gtx/projection.hpp>
+#include "Utilities.h"
+
+
 
 namespace Actors {
     ComponentId const RenderAnimationComponent::COMPONENT_ID {"RenderAnimationComponent"};
     ComponentId const RenderComponent::COMPONENT_ID          {"RenderComponent"};
     ComponentId const PhysicsComponent::COMPONENT_ID         {"PhysicsComponent"};
 }
+
 
 namespace Actors {
     Actors::RenderAnimationComponent::RenderAnimationComponent() : mAnimationTime{},
@@ -20,9 +25,9 @@ namespace Actors {
         Log::debug("Animation time %f", mAnimationTime);
         assert(mAnimationTime > 0.f);
 
-        std::vector<std::string> texNames;
+        std::list<std::string> texNames;
         std::string texNamesFromXml = pData->Attribute("Textures");
-        ParseTextureNamesFromXml(texNamesFromXml, texNames);
+        ParseStringWithPunct(texNamesFromXml, texNames);
 
         assert(texNames.size() > 0);
         for(auto const & texName: texNames) {
@@ -43,19 +48,6 @@ namespace Actors {
             ++mItCurrentFrame;
             mTimeCollector = 0.f;
             if(mItCurrentFrame == mTextures.end()) mItCurrentFrame = mTextures.begin();
-        }
-    }
-
-    void RenderAnimationComponent::ParseTextureNamesFromXml(std::string const &src,
-                                                            std::vector<std::string> &dst) {
-        std::string texName;
-        for(auto const & c: src) {
-            if(!ispunct(c))
-                texName.push_back(c);
-            else {
-                dst.push_back(texName);
-                texName.clear();
-            }
         }
     }
 

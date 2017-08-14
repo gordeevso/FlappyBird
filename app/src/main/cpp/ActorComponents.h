@@ -2,6 +2,9 @@
 
 #include "Actor.h"
 
+
+
+
 namespace Actors {
 
     class RenderAnimationComponent : public ActorComponent
@@ -12,11 +15,8 @@ namespace Actors {
         virtual ComponentId VGetId() const { return COMPONENT_ID; }
         std::shared_ptr<Texture> const GetCurrentFrameTexture() const { return *mItCurrentFrame; }
 
-        virtual bool VInit(XmlElement * pData);
+        virtual bool VInit(Actors::XmlElement * pData);
         virtual void VUpdate(double deltaSec);
-
-    private:
-        void ParseTextureNamesFromXml(std::string const & src, std::vector<std::string> & dst);
 
     private:
         std::vector<std::shared_ptr<Texture>> mTextures;

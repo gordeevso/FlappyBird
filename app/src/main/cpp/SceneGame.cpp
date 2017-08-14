@@ -5,6 +5,9 @@
 #include "SceneGame.h"
 #include "GLState.h"
 #include "Android.h"
+#include "EventManager.h"
+#include "Events.h"
+#include "GameTypes.h"
 
 SceneGame::SceneGame() : mPtrBird {nullptr},
                  mPtrPBird {nullptr},
@@ -67,15 +70,17 @@ void SceneGame::RestartGame() {
         barrier.mBarrierState = BarrierState::CALCULATE;
     }
 
+    mPtrBird->Destroy();
+    mPtrBird.reset();
+
     mPtrBird = mPtrActorFactory->CreateActor("xmlSettings/owl.xml");
     auto ptrWeakPhysicsComponentBird = mPtrBird->GetComponent<Actors::PhysicsComponent>("PhysicsComponent");
     mPtrPBird = Actors::MakeStrongPtr(ptrWeakPhysicsComponentBird);
 
-
 }
 
 
-bool SceneGame::Update(double deltaSec) {
+void SceneGame::Update(double deltaSec) {
 
     switch(mBirdState) {
         case OwlState::FALL: {
@@ -107,11 +112,12 @@ bool SceneGame::Update(double deltaSec) {
             }
 
             case BarrierState::SHOW : {
-                if(mPtrPBird->CheckCollision(*barrier.mPtrPTopColumn))
-                    return false;
+                if(mPtrPBird->CheckCollision(*barrier.mPtrPTopColumn) ||
+                   mPtrPBird->CheckCollision(*barrier.mPtrPBottomColumn)) {
+                    Events::EventManager::Get().QueueEvent(std::shared_ptr<Events::EventChangeGameState>(
+                            new Events::EventChangeGameState(GameState::FINISH)));
+                }
 
-                if(mPtrPBird->CheckCollision(*barrier.mPtrPBottomColumn))
-                    return false;
 
                 barrier.mPtrATopColumn->Update(deltaSec);
                 barrier.mPtrABottomColumn->Update(deltaSec);
@@ -122,12 +128,12 @@ bool SceneGame::Update(double deltaSec) {
     }
 
 //    Log::debug("Bird position %f , %f", mPtrPBird->GetPosition().x, mPtrPBird->GetPosition().y);
-    if(CheckBirdOverlapScene())
-        return false;
+    if(CheckBirdOverlapScene()) {
+        Events::EventManager::Get().QueueEvent(std::shared_ptr<Events::EventChangeGameState>(
+                new Events::EventChangeGameState(GameState::FINISH)));
+    }
 
     mPtrBird->Update(deltaSec);
-
-    return true;
 }
 
 void SceneGame::Draw() {
@@ -211,7 +217,6 @@ bool SceneGame::CheckBirdOverlapScene() {
 
 
 ScenePause::ScenePause(const std::string &message) : mMessage {message} {
-
 }
 
 void ScenePause::Update(double deltaSec) {
@@ -220,11 +225,7 @@ void ScenePause::Update(double deltaSec) {
 
 void ScenePause::Draw(std::unique_ptr<TextRenderer> const & ptrTextRenderer) {
 
-    ptrTextRenderer->RenderText(mMessage,
-                                GLState::GetInstance().GetScreenWidth() / 2.f - (ptrTextRenderer->GetCharMap().find('a')->second.mSize.x * mMessage.size()) / 2.f,
-                                GLState::GetInstance().GetScreenHeight() / 2.f - ptrTextRenderer->GetCharMap().find('a')->second.mSize.y,
-                                1.0f,
-                                glm::vec3(0.2f, 0.2f, 0.8f));
+    ptrTextRenderer->DrawStrings();
 }
 
 

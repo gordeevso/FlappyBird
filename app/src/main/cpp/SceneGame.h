@@ -12,7 +12,7 @@ class SceneGame {
 public:
     SceneGame();
     ~SceneGame() = default;
-    bool Update(double deltaSec);
+    void Update(double deltaSec);
     void Draw();
 
     void InputTap(bool isTapped) { mCheckInputTap = isTapped; }

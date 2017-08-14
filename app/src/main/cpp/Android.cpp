@@ -1,16 +1,19 @@
 
 #include <cassert>
 #include <malloc.h>
+#include <memory>
 
 #include "Android.h"
 #include "FlappyEngine.h"
 #include "Log.h"
+#include "Events.h"
 
 Android::Android() : mPtrAndroidApp {nullptr},
                      mAssetManager {nullptr},
                      mAsset {nullptr},
                      mPtrTapDetector {nullptr},
-                     mTapped{false},
+                     mRequestToUnloadResources {false},
+                     mTapped {false},
                      mHasFocus {false},
                      mFinishActivity {false}
 {}
@@ -110,13 +113,20 @@ void Android::HandleState(int32_t cmd) {
 
 
         case APP_CMD_INIT_WINDOW:
+            mRequestToUnloadResources = false;
             Log::debug("APP_CMD_INIT_WINDOW");
         case APP_CMD_WINDOW_RESIZED:
             Log::debug("APP_CMD_WINDOW_RESIZED");
             GLState::GetInstance().Resume();
-            FlappyEngine::GetInstance().Init();
+            FlappyEngine::GetInstance().LoadResources();
             break;
 
+        case APP_CMD_TERM_WINDOW:
+            Log::debug("APP_CMD_TERM_WINDOW");
+            FlappyEngine::GetInstance().onDestroyWindow();
+            if(mRequestToUnloadResources) FlappyEngine::GetInstance().UnloadResources();
+            GLState::GetInstance().Suspend();
+            break;
 
         case APP_CMD_DESTROY:
             Log::debug("APP_CMD_DESTROY");
@@ -169,12 +179,6 @@ void Android::HandleState(int32_t cmd) {
             FlappyEngine::GetInstance().onStop();
             break;
 
-        case APP_CMD_TERM_WINDOW:
-            Log::debug("APP_CMD_TERM_WINDOW");
-            FlappyEngine::GetInstance().onDestroyWindow();
-            GLState::GetInstance().Suspend();
-            break;
-
         default:
             break;
     }
@@ -182,6 +186,10 @@ void Android::HandleState(int32_t cmd) {
 }
 
 int32_t Android::HandleInput(AInputEvent *inputEvent) {
+    if (AKeyEvent_getKeyCode(inputEvent) == AKEYCODE_BACK) {
+        mRequestToUnloadResources = true;
+    }
+
     if (AInputEvent_getType(inputEvent) == AINPUT_EVENT_TYPE_MOTION) {
         TouchState tapState = mPtrTapDetector->Detect(inputEvent);
 

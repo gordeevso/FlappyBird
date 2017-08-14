@@ -6,8 +6,15 @@
 class TimeManager
 {
 public:
+
+    static TimeManager & GetInstance() {
+        static TimeManager instance;
+        return instance;
+    }
+
+public:
     explicit TimeManager();
-    ~TimeManager() {Log::debug("dtor");};
+    ~TimeManager() = default;
     TimeManager(TimeManager const &) = delete;
     TimeManager & operator=(TimeManager const &) = delete;
 
@@ -19,6 +26,7 @@ public:
     double FramesPerSecond() noexcept;
     double GetElapsed() const noexcept;
     void ResetElapsed() noexcept;
+    double GetSleepTime() const noexcept;
 
 private:
     double mElapsed;

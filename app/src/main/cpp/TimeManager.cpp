@@ -1,6 +1,7 @@
 
 #include "TimeManager.h"
 #include "Log.h"
+#include "EventManager.h"
 
 double const TARGET_FRAME_RATE = 60.0;
 double const TARGET_FRAME_TIME = 1.0 / TARGET_FRAME_RATE;
@@ -32,17 +33,24 @@ void TimeManager::UpdateMainLoop() {
     mElapsed += mFrameTime;
 
     if (mSleepTime > 0.f) {
-        mSleepTS.tv_sec = static_cast<int32_t>(mSleepTime);
+        double sleepTime = GetTimeNow();
+        Events::EventManager::Get().Update(static_cast<float>(mSleepTime), true);
+        sleepTime = mSleepTime - GetTimeNow() - sleepTime;
+
+        mSleepTS.tv_sec = static_cast<int32_t>(sleepTime);
 
         if(mSleepTS.tv_sec != 0) {
             mSleepTS.tv_nsec = static_cast<int32_t>(
-                    mSleepTime - static_cast<int32_t>(mSleepTime * GIGA) );
+                    sleepTime - static_cast<int32_t>(sleepTime * GIGA) );
         }
         else {
-            mSleepTS.tv_nsec = static_cast<int32_t>(mSleepTime * GIGA);
+            mSleepTS.tv_nsec = static_cast<int32_t>(sleepTime * GIGA);
         }
 
         nanosleep(&mSleepTS, nullptr);
+    }
+    else {
+        Events::EventManager::Get().Update(0.02f, false);
     }
 }
 
@@ -73,4 +81,8 @@ double TimeManager::GetElapsed() const noexcept {
 
 void TimeManager::ResetElapsed() noexcept {
     mElapsed = 0.f;
+}
+
+double TimeManager::GetSleepTime() const noexcept {
+    return mSleepTime;
 }

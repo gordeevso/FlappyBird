@@ -2,8 +2,11 @@ cmake_minimum_required(VERSION 3.4.1)
 
 add_library( FlappyPelican SHARED
              src/main/cpp/GLState.cpp
-             src/main/cpp/StringUtils.cpp
              src/main/cpp/TextRenderer.cpp
+             src/main/cpp/Ui.cpp
+             src/main/cpp/Utilities.cpp
+             src/main/cpp/EventManager.cpp
+             src/main/cpp/Events.cpp
              src/main/cpp/Actor.cpp
              src/main/cpp/ActorFactory.cpp
              src/main/cpp/ActorComponents.cpp
@@ -33,9 +36,6 @@ add_library(libSOIL2 STATIC
 
 add_library(tinyxml2 STATIC
             libs/tinyxml2/tinyxml2.cpp)
-
-
-
 
 find_library(android
              app-glue

@@ -1,5 +1,5 @@
 #include "TouchDetector.h"
-
+#include "Events.h"
 #include "Log.h"
 
 TouchDetector::TouchDetector() {
@@ -40,6 +40,7 @@ TouchState TapDetector::Detect(AInputEvent const * motion_event) {
                     float y = AMotionEvent_getY(motion_event, 0) - mDownY;
                     if (x * x + y * y < TOUCH_SLOP * TOUCH_SLOP * mDPFactor) {
                         Log::info("TapDetector: Tap detected");
+//                        Events::EventManager::Get().QueueEvent(std::shared_ptr<Events::EventInputXY>(new Events::EventInputXY{{mDownX, mDownY}}));
                         return GESTURE_STATE_ACTION;
                     }
                 }

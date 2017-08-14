@@ -43,6 +43,7 @@ private:
     AAsset* mAsset;
 
     std::unique_ptr<TapDetector> mPtrTapDetector;
+    bool mRequestToUnloadResources;
     bool mTapped;
 
     bool mHasFocus;

@@ -1,0 +1,164 @@
+<Ui>
+    <StateStart
+        FontType="OpenSans-Regular.ttf"
+        FontSize="30">
+
+        <String1
+            Type="START"
+            Text="Start"
+            Layout="CENTER"
+            Static="true"
+            DistCharsPixels="2"
+            ScaleX="1" ScaleMaxX="2"
+            ScaleY="1" ScaleMaxY="2"
+            ScaleW="0.4"
+            ScaleH="0.1">
+            <Color r="0.3" g="0.2" b="0.7"> </Color>
+        </String1>
+    </StateStart>
+
+
+
+
+    <StatePause
+        FontType="OpenSans-Regular.ttf"
+        FontSize="20">
+
+        <String1
+            Type="PAUSE"
+            Text="Current :"
+            Layout="CENTER"
+            Static="true"
+            DistCharsPixels="2"
+            ScaleX="2" ScaleMaxX="4"
+            ScaleY="2" ScaleMaxY="5"
+            ScaleW="0.4"
+            ScaleH="0.1">
+            <Color r="0.3" g="0.2" b="0.7"> </Color>
+        </String1>
+
+        <String2
+            Type="PAUSE"
+            Text="0"
+            Layout="RIGHT"
+            Static="false"
+            DistCharsPixels="2"
+            ScaleX="3" ScaleMaxX="4"
+            ScaleY="2" ScaleMaxY="5"
+            ScaleW="0.2"
+            ScaleH="0.05">
+            <Color r="0.3" g="0.2" b="0.7"> </Color>
+        </String2>
+
+        <String3
+            Type="PAUSE"
+            Text="Restart"
+            Layout="CENTER"
+            Static="true"
+            DistCharsPixels="2"
+            ScaleX="1" ScaleMaxX="2"
+            ScaleY="3" ScaleMaxY="5"
+            ScaleW="0.4"
+            ScaleH="0.1">
+            <Color r="0.3" g="0.2" b="0.7"> </Color>
+        </String3>
+
+        <String4
+            Type="PAUSE"
+            Text="Continue"
+            Layout="CENTER"
+            Static="true"
+            DistCharsPixels="2"
+            ScaleX="1" ScaleMaxX="2"
+            ScaleY="4" ScaleMaxY="5"
+            ScaleW="0.4"
+            ScaleH="0.1">
+            <Color r="0.3" g="0.2" b="0.7"> </Color>
+        </String4>
+    </StatePause>
+
+
+
+
+    <StateFinish
+        FontType="OpenSans-Regular.ttf"
+        FontSize="20">
+
+        <String1
+            Type="FINISH"
+            Text="Final score:"
+            Layout="CENTER"
+            Static="true"
+            DistCharsPixels="2"
+            ScaleX="2" ScaleMaxX="4"
+            ScaleY="2" ScaleMaxY="4"
+            ScaleW="0.4"
+            ScaleH="0.1">
+            <Color r="0.3" g="0.2" b="0.7"> </Color>
+        </String1>
+
+        <String2
+            Type="FINISH"
+            Text="0"
+            Layout="RIGHT"
+            Static="false"
+            DistCharsPixels="2"
+            ScaleX="3" ScaleMaxX="4"
+            ScaleY="2" ScaleMaxY="4"
+            ScaleW="0.2"
+            ScaleH="0.05">
+            <Color r="0.3" g="0.2" b="0.7"> </Color>
+        </String2>
+
+        <String3
+            Type="FINISH"
+            Text="Try again"
+            Layout="CENTER"
+            Static="true"
+            DistCharsPixels="2"
+            ScaleX="1" ScaleMaxX="2"
+            ScaleY="3" ScaleMaxY="4"
+            ScaleW="0.4"
+            ScaleH="0.1">
+            <Color r="0.3" g="0.2" b="0.7"> </Color>
+        </String3>
+    </StateFinish>
+
+
+
+
+    <StateActive
+        FontType="luckiestguy.ttf"
+        FontSize="20">
+
+        <String1
+            Type="ACTIVE"
+            Text="0"
+            Layout="CENTER"
+            Static="false"
+            DistCharsPixels="2"
+            ScaleX="1" ScaleMaxX="2"
+            ScaleY="2" ScaleMaxY="6"
+            ScaleW="0.4"
+            ScaleH="0.1">
+            <Color r="0.3" g="0.2" b="0.7"> </Color>
+        </String1>
+
+        <String2
+            Type="ACTIVE"
+            Text="0"
+            Layout="RIGHT"
+            Static="false"
+            DistCharsPixels="2"
+            ScaleX="7" ScaleMaxX="8"
+            ScaleY="7" ScaleMaxY="8"
+            ScaleW="0.4"
+            ScaleH="0.1">
+            <Color r="0.3" g="0.2" b="0.7"> </Color>
+        </String2>
+    </StateActive>
+
+</Ui>
+
+
+
