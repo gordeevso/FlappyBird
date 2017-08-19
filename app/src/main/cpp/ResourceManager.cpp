@@ -166,6 +166,7 @@ void ResourceManager::LoadUiStrings(std::string const &uiFilePath) {
 
             assert(ptrNodeString);
 
+            std::string curName = ptrNodeString->Attribute("Name");
             std::string strState = ptrNodeString->Attribute("Type");
             curState = StrToGameState(strState);
 
@@ -200,12 +201,11 @@ void ResourceManager::LoadUiStrings(std::string const &uiFilePath) {
             float r = ptrNodeColor->FloatAttribute("r");
             float g = ptrNodeColor->FloatAttribute("g");
             float b = ptrNodeColor->FloatAttribute("b");
-            Log::debug("LOAD Settings %s SUCCESS", uiFilePath.c_str());
 
             glm::vec3 curColor {r, g, b};
 
-
-            uiStrings.push_back({curText,
+            uiStrings.push_back({curName,
+                                 curText,
                                 curIsStatic,
                                 curLayout,
                                 curDistPixels,
@@ -219,11 +219,9 @@ void ResourceManager::LoadUiStrings(std::string const &uiFilePath) {
 
     }
     Log::debug("LOAD Settings %s SUCCESS", uiFilePath.c_str());
-
-
 }
 
-std::vector<UiString> const & ResourceManager::GetUiStrings(GameState gameState) {
+std::vector<UiString> & ResourceManager::GetUiStrings(GameState gameState) {
     auto resUiStringsIt = mUiStrings.find(gameState);
     if(resUiStringsIt != mUiStrings.end()) {
         return resUiStringsIt->second;

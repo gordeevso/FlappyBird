@@ -15,7 +15,7 @@
 		VelocityX="0.0"
 		VelocityY="0.0"
 		AccelerationX="0.0"
-		AccelerationY="1000.0"
+		AccelerationY="1500.0"
 		PositionCenter="true">
 	</PhysicsComponent>
 

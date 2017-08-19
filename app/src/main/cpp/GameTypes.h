@@ -28,13 +28,7 @@ struct FTCharacter {
     glm::vec2   size;
 };
 
-struct FTString {
-    std::string             text;
-    glm::vec2               size;
-    glm::vec2               topLeft;
-    glm::vec3               color;
-    std::vector<glm::vec2>  positions;
-};
+
 
 enum class LayoutType {
     CENTER,
@@ -43,6 +37,7 @@ enum class LayoutType {
 };
 
 struct UiString {
+    std::string name;
     std::string text;
     bool isStatic;
     LayoutType layout;

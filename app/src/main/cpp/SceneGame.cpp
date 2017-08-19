@@ -10,16 +10,18 @@
 #include "GameTypes.h"
 
 SceneGame::SceneGame() : mPtrBird {nullptr},
-                 mPtrPBird {nullptr},
-                 mVecBarriers {},
-                 mPtrActorFactory {new Actors::ActorFactory},
-                 mPtrSpriteRenderer {new SpriteRenderer},
-                 mTargetTapDistance {},
-                 mTargetTapTime {},
-                 mCheckInputTap {false},
-                 mCurrentScore {0},
-                 mBirdState {OwlState::TAP},
-                 mRandGenerator {static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count())}
+                         mPtrPBird {nullptr},
+                         mVecBarriers {},
+                         mPtrActorFactory {new Actors::ActorFactory},
+                         mPtrSpriteRenderer {new SpriteRenderer},
+                         mTargetTapDistance {},
+                         mTargetTapTime {},
+                         mCheckInputTap {false},
+                         mCurrentScore {},
+                         mFinalScore {},
+                         mPrevMinDistBirdCol {std::numeric_limits<float>::max()},
+                         mBirdState {OwlState::TAP},
+                         mRandGenerator {static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count())}
 {
     tinyxml2::XMLDocument sceneXml;
     std::vector<uint8_t> xmlBuffer;
@@ -116,6 +118,12 @@ void SceneGame::Update(double deltaSec) {
                    mPtrPBird->CheckCollision(*barrier.mPtrPBottomColumn)) {
                     Events::EventManager::Get().QueueEvent(std::shared_ptr<Events::EventChangeGameState>(
                             new Events::EventChangeGameState(GameState::FINISH)));
+                    mFinalScore = mCurrentScore;
+                    mCurrentScore = 0;
+                    Events::EventManager::Get().QueueEvent(std::shared_ptr<Events::EventUpdateScore>(
+                            new Events::EventUpdateScore(to_string(mCurrentScore))));
+                    Events::EventManager::Get().QueueEvent(std::shared_ptr<Events::EventFinalScore>(
+                            new Events::EventFinalScore(to_string(mFinalScore))));
                 }
 
 
@@ -127,13 +135,24 @@ void SceneGame::Update(double deltaSec) {
         }
     }
 
-//    Log::debug("Bird position %f , %f", mPtrPBird->GetPosition().x, mPtrPBird->GetPosition().y);
+    mPtrBird->Update(deltaSec);
+
     if(CheckBirdOverlapScene()) {
         Events::EventManager::Get().QueueEvent(std::shared_ptr<Events::EventChangeGameState>(
                 new Events::EventChangeGameState(GameState::FINISH)));
+        mCurrentScore = 0;
+        mFinalScore = mCurrentScore;
+        Events::EventManager::Get().QueueEvent(std::shared_ptr<Events::EventUpdateScore>(
+                new Events::EventUpdateScore(to_string(mCurrentScore))));
+        Events::EventManager::Get().QueueEvent(std::shared_ptr<Events::EventFinalScore>(
+                new Events::EventFinalScore(to_string(mFinalScore))));
     }
 
-    mPtrBird->Update(deltaSec);
+
+    if(CheckScore()){
+        Events::EventManager::Get().QueueEvent(std::shared_ptr<Events::EventUpdateScore>(
+                new Events::EventUpdateScore(to_string(mCurrentScore))));
+    }
 }
 
 void SceneGame::Draw() {
@@ -170,7 +189,6 @@ int32_t SceneGame::CalculateBarriersCount() {
 void SceneGame::CalculateColumnPos(std::shared_ptr<Actors::PhysicsComponent> ptrTop,
                                std::shared_ptr<Actors::PhysicsComponent> ptrBottom) {
     auto TSize = ptrTop->GetSize();
-    auto BSize = ptrBottom->GetSize();
 
     glm::vec2 TPos {};
     glm::vec2 BPos {};
@@ -211,9 +229,30 @@ bool SceneGame::CheckBirdOverlapScene() {
     return mPtrPBird->GetPosition().y + mPtrPBird->GetSize().y > GLState::GetInstance().GetScreenHeight();
 }
 
+bool SceneGame::CheckScore() {
+    float minDist = std::numeric_limits<float>::max();
 
+    for(auto const & barrier: mVecBarriers) {
+        if(barrier.mBarrierState == BarrierState::SHOW) {
+            minDist = std::min<float>(minDist, barrier.mPtrPTopColumn->GetPosition().x + barrier.mPtrPTopColumn->GetSize().x - mPtrPBird->GetPosition().x);
+        }
+    }
 
-
+    for(auto const & barrier: mVecBarriers) {
+        if(barrier.mBarrierState == BarrierState::SHOW) {
+            if(minDist < 0.f
+               &&
+               mPrevMinDistBirdCol > 0.f)
+            {
+                ++mCurrentScore;
+                mPrevMinDistBirdCol = minDist;
+                return true;
+            }
+        }
+    }
+    mPrevMinDistBirdCol = minDist;
+    return false;
+}
 
 
 ScenePause::ScenePause(const std::string &message) : mMessage {message} {
@@ -222,10 +261,4 @@ ScenePause::ScenePause(const std::string &message) : mMessage {message} {
 void ScenePause::Update(double deltaSec) {
 
 }
-
-void ScenePause::Draw(std::unique_ptr<TextRenderer> const & ptrTextRenderer) {
-
-    ptrTextRenderer->DrawStrings();
-}
-
 

@@ -6,6 +6,7 @@
 #include "ActorFactory.h"
 #include "SpriteRenderer.h"
 #include "TextRenderer.h"
+//#include "Events.h"
 
 class SceneGame {
 
@@ -28,7 +29,7 @@ private:
     bool ShowBarrier(float posX);
     bool IsSeen(std::shared_ptr<Actors::PhysicsComponent> ptrTop);
     bool CheckBirdOverlapScene();
-
+    bool CheckScore();
 private:
     enum class OwlState {
         FALL,
@@ -72,8 +73,9 @@ private:
     float mTargetColumnLeftRightDistance;
     float mTargetColumnMinBorderDistance;
     uint64_t mCurrentScore;
+    uint64_t mFinalScore;
+    float mPrevMinDistBirdCol;
     OwlState mBirdState;
-
     std::minstd_rand0 mRandGenerator;
 };
 
@@ -84,7 +86,6 @@ public:
     ScenePause(std::string const & message = "");
     ~ScenePause() = default;
     void Update(double deltaSec);
-    void Draw(std::unique_ptr<TextRenderer> const & ptrTextRenderer);
 
     void InputTap(bool isTapped) { mCheckInputTap = isTapped; }
 

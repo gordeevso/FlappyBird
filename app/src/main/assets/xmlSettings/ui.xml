@@ -1,9 +1,10 @@
 <Ui>
     <StateStart
         FontType="OpenSans-Regular.ttf"
-        FontSize="30">
+        FontSize="40">
 
         <String1
+            Name="StartStart"
             Type="START"
             Text="Start"
             Layout="CENTER"
@@ -22,11 +23,12 @@
 
     <StatePause
         FontType="OpenSans-Regular.ttf"
-        FontSize="20">
+        FontSize="40">
 
         <String1
+            Name="CurrentScorePause"
             Type="PAUSE"
-            Text="Current :"
+            Text="Current  score  :"
             Layout="CENTER"
             Static="true"
             DistCharsPixels="2"
@@ -38,6 +40,7 @@
         </String1>
 
         <String2
+            Name="ScorePause"
             Type="PAUSE"
             Text="0"
             Layout="RIGHT"
@@ -51,6 +54,7 @@
         </String2>
 
         <String3
+            Name="RestartPause"
             Type="PAUSE"
             Text="Restart"
             Layout="CENTER"
@@ -64,6 +68,7 @@
         </String3>
 
         <String4
+            Name="ContinuePause"
             Type="PAUSE"
             Text="Continue"
             Layout="CENTER"
@@ -82,42 +87,45 @@
 
     <StateFinish
         FontType="OpenSans-Regular.ttf"
-        FontSize="20">
+        FontSize="40">
 
         <String1
+            Name="FinalScoreFinish"
             Type="FINISH"
-            Text="Final score:"
+            Text="Final  score  :"
             Layout="CENTER"
             Static="true"
             DistCharsPixels="2"
             ScaleX="2" ScaleMaxX="4"
-            ScaleY="2" ScaleMaxY="4"
+            ScaleY="2" ScaleMaxY="5"
             ScaleW="0.4"
             ScaleH="0.1">
             <Color r="0.3" g="0.2" b="0.7"> </Color>
         </String1>
 
         <String2
+            Name="ScoreFinish"
             Type="FINISH"
             Text="0"
-            Layout="RIGHT"
+            Layout="CENTER"
             Static="false"
             DistCharsPixels="2"
             ScaleX="3" ScaleMaxX="4"
-            ScaleY="2" ScaleMaxY="4"
+            ScaleY="2" ScaleMaxY="5"
             ScaleW="0.2"
-            ScaleH="0.05">
+            ScaleH="0.1">
             <Color r="0.3" g="0.2" b="0.7"> </Color>
         </String2>
 
         <String3
+            Name="TryAgainFinish"
             Type="FINISH"
-            Text="Try again"
+            Text="Try  again"
             Layout="CENTER"
             Static="true"
             DistCharsPixels="2"
             ScaleX="1" ScaleMaxX="2"
-            ScaleY="3" ScaleMaxY="4"
+            ScaleY="3" ScaleMaxY="5"
             ScaleW="0.4"
             ScaleH="0.1">
             <Color r="0.3" g="0.2" b="0.7"> </Color>
@@ -129,9 +137,10 @@
 
     <StateActive
         FontType="luckiestguy.ttf"
-        FontSize="20">
+        FontSize="40">
 
         <String1
+            Name="ScoreActive"
             Type="ACTIVE"
             Text="0"
             Layout="CENTER"
@@ -145,6 +154,7 @@
         </String1>
 
         <String2
+            Name="FPSActive"
             Type="ACTIVE"
             Text="0"
             Layout="RIGHT"

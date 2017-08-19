@@ -31,7 +31,7 @@ public:
     static Shader & GetShader(std::string const &name);
     static std::shared_ptr<Texture> GetTexture(std::string const &name);
     static std::vector<std::string> const & GetTextureNames();
-    static std::vector<UiString> const  & GetUiStrings(GameState gameState);
+    static std::vector<UiString> & GetUiStrings(GameState gameState);
 
     static void Read(std::string path, std::vector<uint8_t> & pBuffer, size_t sizeBytes = 0);
 private:

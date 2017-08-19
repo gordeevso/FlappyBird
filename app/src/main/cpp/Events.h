@@ -2,7 +2,6 @@
 
 #include "EventManager.h"
 #include "Utilities.h"
-#include "FlappyEngine.h"
 #include "GameTypes.h"
 
 namespace Events {
@@ -61,7 +60,37 @@ namespace Events {
         glm::vec2 mInputXY = {};
     };
 
+    class EventUpdateScore : public BaseEventData {
+    public:
+        static const EventType sEventType;
 
+        EventUpdateScore(std::string const & newScore) : mScore{newScore}
+        {}
+        std::string const & GetScore() const { return mScore; }
+
+        virtual const EventType &VGetEventType(void) const { return sEventType; }
+        virtual IEventDataPtr VCopy(void) const { return IEventDataPtr(new EventUpdateScore(mScore)); }
+        virtual const char *GetName(void) const { return "EventUpdateScore"; }
+
+    private:
+        std::string mScore;
+    };
+
+    class EventFinalScore : public BaseEventData {
+    public:
+        static const EventType sEventType;
+
+        EventFinalScore(std::string const & newScore) : mScore{newScore}
+        {}
+        std::string const & GetScore() const { return mScore; }
+
+        virtual const EventType &VGetEventType(void) const { return sEventType; }
+        virtual IEventDataPtr VCopy(void) const { return IEventDataPtr(new EventFinalScore(mScore)); }
+        virtual const char *GetName(void) const { return "EventFinalScore"; }
+
+    private:
+        std::string mScore;
+    };
 //    class EventBackKeyPressed : public BaseEventData {
 //    public:
 //        static const EventType sEventType;

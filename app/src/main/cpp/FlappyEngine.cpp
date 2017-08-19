@@ -32,6 +32,8 @@ void FlappyEngine::LoadResources() {
         ResourceManager::LoadTexture("textures/bird3.png", GL_TRUE, "bird3");
         ResourceManager::LoadTexture("textures/bird4.png", GL_TRUE, "bird4");
         ResourceManager::LoadTexture("textures/column.png", GL_TRUE, "column");
+        ResourceManager::LoadShader("shaders/text.vs", "shaders/text.fs", "text_shader");
+        ResourceManager::LoadShader("shaders/sprite.vs", "shaders/sprite.fs", "sprite_shader");
 
         ResourceManager::LoadUiStrings("xmlSettings/ui.xml");
 
@@ -90,6 +92,8 @@ void FlappyEngine::onDeactivate() {
 
 bool FlappyEngine::onStep() {
     TimeManager::GetInstance().UpdateMainLoop();
+    glClearColor(0.f, 0.4f, 0.f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     switch (sGameState) {
         case GameState::START : {
@@ -100,9 +104,6 @@ bool FlappyEngine::onStep() {
         }
 
         case GameState::ACTIVE: {
-            glClearColor(0.f, 0.4f, 0.f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-
             mPtrGameScene->InputTap(Android::GetInstance().UpdateInput());
             mPtrGameScene->Update(TimeManager::GetInstance().FrameTime());
             mPtrGameScene->Draw();

@@ -6,13 +6,10 @@
 #include "TextRenderer.h"
 #include "Log.h"
 
-std::string const TEXT_SHADER = "text_shader";
-
 
 void TextRenderer::Init(std::string const & font, GLuint fontSize)
 {
-    ResourceManager::LoadShader("shaders/text.vs", "shaders/text.fs", TEXT_SHADER);
-    mShader = ResourceManager::GetShader(TEXT_SHADER);
+    mShader = ResourceManager::GetShader("text_shader");
     mShader.Use();
 
     glm::mat4 projection = glm::ortho(0.0f,
@@ -53,7 +50,6 @@ void TextRenderer::Init(std::string const & font, GLuint fontSize)
     }
 
     FT_Set_Pixel_Sizes(mPtrFTFace, 0, fontSize);
-    Log::debug("fontSize %d", fontSize);
 
     FT_Bool       use_kerning {};
     FT_UInt       prevGlyphIndex {};
@@ -142,13 +138,12 @@ void TextRenderer::Init(std::string const & font, GLuint fontSize)
 
         mCharactersMap.insert(std::make_pair(c, ftChar));
     }
-    Log::debug("fontSize 2");
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
 }
 
-void TextRenderer::DrawStrings() {
+void TextRenderer::Draw(FTString const &ftString) {
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -157,76 +152,38 @@ void TextRenderer::DrawStrings() {
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(mVAO);
 
+    mShader.SetVector3f("textColor", ftString.color);
+
     size_t idx {};
-    for (auto const & ftString : mStringsStaticList) {
+    for( auto c : ftString.text) {
+        auto ftChar = mCharactersMap[c];
 
-        idx = 0;
-        mShader.SetVector3f("textColor", ftString.color);
+        GLfloat posX = ftString.topLeft.x + ftString.positions[idx].x;
+        GLfloat posY = ftString.topLeft.y + ftString.positions[idx].y;
 
-        for( auto c : ftString.text) {
-            auto ftChar = mCharactersMap[c];
+        GLfloat w = ftChar.size.x;
+        GLfloat h = ftChar.size.y;
 
-            GLfloat posX = ftString.topLeft.x + ftString.positions[idx].x;
-            GLfloat posY = ftString.topLeft.y + ftString.positions[idx].y;
+        GLfloat vertices[6][4] = {
+                { posX,     posY + h,   0.f, 1.f },
+                { posX + w, posY,       1.f, 0.f },
+                { posX,     posY,       0.f, 0.f },
 
-            GLfloat w = ftChar.size.x;
-            GLfloat h = ftChar.size.y;
+                { posX,     posY + h,   0.f, 1.f },
+                { posX + w, posY + h,   1.f, 1.f },
+                { posX + w, posY,       1.f, 0.f }
+        };
+        glBindTexture(GL_TEXTURE_2D, ftChar.mId);
 
-            GLfloat vertices[6][4] = {
-                    { posX,     posY + h,   0.f, 1.f },
-                    { posX + w, posY,       1.f, 0.f },
-                    { posX,     posY,       0.f, 0.f },
+        glBindBuffer(GL_ARRAY_BUFFER, mVBO);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); // Be sure to use glBufferSubData and not glBufferData
 
-                    { posX,     posY + h,   0.f, 1.f },
-                    { posX + w, posY + h,   1.f, 1.f },
-                    { posX + w, posY,       1.f, 0.f }
-            };
-            glBindTexture(GL_TEXTURE_2D, ftChar.mId);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            glBindBuffer(GL_ARRAY_BUFFER, mVBO);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); // Be sure to use glBufferSubData and not glBufferData
-
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-
-            ++idx;
-        }
+        ++idx;
     }
 
-    for (auto const & ftString : mStringsDynamicMap) {
-
-        idx = 0;
-        mShader.SetVector3f("textColor", ftString.second.color);
-
-        for( auto c : ftString.second.text) {
-            auto ftChar = mCharactersMap[c];
-
-            GLfloat posX = ftString.second.topLeft.x + ftString.second.positions[idx].x;
-            GLfloat posY = ftString.second.topLeft.y + ftString.second.positions[idx].y;
-
-            GLfloat w = ftChar.size.x;
-            GLfloat h = ftChar.size.y;
-
-            GLfloat vertices[6][4] = {
-                    { posX,     posY + h,   0.f, 1.f },
-                    { posX + w, posY,       1.f, 0.f },
-                    { posX,     posY,       0.f, 0.f },
-
-                    { posX,     posY + h,   0.f, 1.f },
-                    { posX + w, posY + h,   1.f, 1.f },
-                    { posX + w, posY,       1.f, 0.f }
-            };
-            glBindTexture(GL_TEXTURE_2D, ftChar.mId);
-
-            glBindBuffer(GL_ARRAY_BUFFER, mVBO);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices); // Be sure to use glBufferSubData and not glBufferData
-
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-
-            ++idx;
-        }
-    }
 
     glBindVertexArray(0);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -247,22 +204,12 @@ TextRenderer::~TextRenderer() {
     }
 }
 
-void TextRenderer::AddRenderString(UiString const & uiString) {
-
+void TextRenderer::CalcUiString(UiString const &uiString, FTString & ftString) {
     assert(uiString.text.size() > 0);
 
-    if(uiString.isStatic) {
-        auto resFinfIt = mStringsDynamicMap.find(uiString.text);
-        if(resFinfIt != mStringsDynamicMap.end()) {
-            mStringsDynamicMap.erase(resFinfIt);
-        }
-    }
-
-    FTString ftStringParams {};
-
-    ftStringParams.text = uiString.text;
-    ftStringParams.color = uiString.color;
-    ftStringParams.positions.reserve(uiString.text.size());
+    ftString.text = uiString.text;
+    ftString.color = uiString.color;
+    ftString.positions.reserve(uiString.text.size());
 
     int32_t posX {};
     int32_t posY {};
@@ -293,7 +240,7 @@ void TextRenderer::AddRenderString(UiString const & uiString) {
         else
             posY = uiString.topLeft.y - (FTChar.bearingY >> 6);
 //        if(FTChar.metrics.height - FTChar.metrics.horiBearingY > 0)
-        ftStringParams.positions.push_back({posX, posY});
+        ftString.positions.push_back({posX, posY});
         /* increment pen position */
 
         posX += uiString.charToCharDistPixels;
@@ -304,10 +251,10 @@ void TextRenderer::AddRenderString(UiString const & uiString) {
                            ft_glyph_bbox_pixels,
                            &glyph_bbox );
 
-        glyph_bbox.xMin += ftStringParams.positions.back().x;
-        glyph_bbox.xMax += ftStringParams.positions.back().x;
-        glyph_bbox.yMin += ftStringParams.positions.back().y;
-        glyph_bbox.yMax += ftStringParams.positions.back().y;
+        glyph_bbox.xMin += ftString.positions.back().x;
+        glyph_bbox.xMax += ftString.positions.back().x;
+        glyph_bbox.yMin += ftString.positions.back().y;
+        glyph_bbox.yMax += ftString.positions.back().y;
 
         if ( glyph_bbox.xMin < bbox.xMin )
             bbox.xMin = glyph_bbox.xMin;
@@ -331,38 +278,33 @@ void TextRenderer::AddRenderString(UiString const & uiString) {
     }
 
     /* compute string dimensions in integer pixels */
-    ftStringParams.size.x = bbox.xMax - bbox.xMin;
-    ftStringParams.size.y = bbox.yMax - bbox.yMin;
+    ftString.size.x = bbox.xMax - bbox.xMin;
+    ftString.size.y = bbox.yMax - bbox.yMin;
 
     int32_t targetWidth = static_cast<int32_t>(uiString.bottomRight.x - uiString.topLeft.x);
     int32_t targetHeight = static_cast<int32_t>(uiString.bottomRight.y - uiString.topLeft.y);
 
     switch (uiString.layout) {
         case LayoutType::CENTER: {
-            ftStringParams.topLeft.x = (targetWidth - static_cast<int32_t>(ftStringParams.size.x)) / 2;
-            ftStringParams.topLeft.y = (targetHeight - static_cast<int32_t>(ftStringParams.size.y)) / 2;
+            ftString.topLeft.x = (targetWidth - static_cast<int32_t>(ftString.size.x)) / 2;
+            ftString.topLeft.y = (targetHeight - static_cast<int32_t>(ftString.size.y)) / 2;
             break;
         }
         case LayoutType::LEFT: {
-            ftStringParams.topLeft.x = uiString.topLeft.x;
-            ftStringParams.topLeft.y = (targetHeight - static_cast<int32_t>(ftStringParams.size.y)) / 2;
+            ftString.topLeft.x = uiString.topLeft.x;
+            ftString.topLeft.y = (targetHeight - static_cast<int32_t>(ftString.size.y)) / 2;
             break;
         }
         case LayoutType::RIGHT: {
-            ftStringParams.topLeft.x = uiString.topLeft.x + (targetWidth - static_cast<int32_t>(ftStringParams.size.x));
-            ftStringParams.topLeft.y = (targetHeight - static_cast<int32_t>(ftStringParams.size.y)) / 2;
+            ftString.topLeft.x = uiString.topLeft.x + (targetWidth - static_cast<int32_t>(ftString.size.x));
+            ftString.topLeft.y = (targetHeight - static_cast<int32_t>(ftString.size.y)) / 2;
             break;
         }
-    }
-
-    if(uiString.isStatic) {
-        mStringsStaticList.push_back(ftStringParams);
-    }
-    else {
-        mStringsDynamicMap.insert(std::make_pair(uiString.text, ftStringParams));
     }
 
 }
 
 
-
+void FTString::Draw(std::shared_ptr<TextRenderer> const &textRenderer) const {
+    textRenderer->Draw(*this);
+}

@@ -6,8 +6,6 @@
 #include "ActorComponents.h"
 #include "Actor.h"
 
-std::string const SPRITE_SHADER = "sprite_shader";
-
 SpriteRenderer::SpriteRenderer() : mShader{},
                                    mVAO{},
                                    mVBO{} {
@@ -20,8 +18,7 @@ SpriteRenderer::~SpriteRenderer() {
 }
 
 void SpriteRenderer::InitSpriteRenderData() {
-    ResourceManager::LoadShader("shaders/sprite.vs", "shaders/sprite.fs", SPRITE_SHADER);
-    mShader = ResourceManager::GetShader(SPRITE_SHADER);
+    mShader = ResourceManager::GetShader("sprite_shader");
 
     glm::mat4 projection = glm::ortho(0.0f,
                                       static_cast<GLfloat>(GLState::GetInstance().GetScreenWidth()),

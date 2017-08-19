@@ -13,6 +13,17 @@
 #include "GameTypes.h"
 
 
+class TextRenderer;
+
+struct FTString {
+    std::string             text;
+    glm::vec2               size;
+    glm::vec2               topLeft;
+    glm::vec3               color;
+    std::vector<glm::vec2>  positions;
+    GameState               state;
+    void Draw(std::shared_ptr<TextRenderer> const & textRenderer) const;
+};
 
 class TextRenderer {
 public:
@@ -22,17 +33,18 @@ public:
     TextRenderer &operator=(TextRenderer const &) = default;
 
     void Init(std::string const & fontPath, size_t fontSize);
-    void AddRenderString(UiString const & uiString);
+    void CalcUiString(UiString const &uiString, FTString & ftString);
 
-    void DrawStrings();
+    void Draw(FTString const &ftString);
 
 private:
     std::unordered_map<uint8_t, FTCharacter> mCharactersMap;
-    std::list<FTString> mStringsStaticList;
-    std::unordered_map<std::string, FTString> mStringsDynamicMap;
+
     Shader mShader;
     GLuint mVAO;
     GLuint mVBO;
     FT_Face mPtrFTFace;
     FT_Library mPtrFTLib;
 };
+
+

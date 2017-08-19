@@ -1,7 +1,7 @@
 <Scene
-    TargetTapDistance="150.0"
-    TargetColumnTopDownDistance="200.0"
-    TargetColumnLeftRightDistance="300.0"
-    TargetColumnMinBorderDistance="100.0"
+    TargetTapDistance="140.0"
+    TargetColumnTopDownDistance="400.0"
+    TargetColumnLeftRightDistance="400.0"
+    TargetColumnMinBorderDistance="150.0"
     TargetTapTime="0.5">
 </Scene>
